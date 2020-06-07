@@ -7,6 +7,11 @@ constexpr int Square(int value)
 // If you care about the binary size (to the extend of caring of the amount of data put into data segment of memory for constexpr objects"
 // the you have no control of that (in the sense that object can be implicitly constexpr and there is not keyword for prohibiting that - there is no 'non-constexpr')
 // But the con is, that even if you don't declare object as constexpr they could end up being consexpr if the requirements for creating such object are fulfilled. 
+// Isn't it also the part of 'as if' rule? The compiler might decide to do stuff in compile time if it has no observable side effects in run-time?
+
+// The other problem is that constexpr implies const, which might not be the thing that is desired. The motivation of making things constexpr might be to have a compile-time
+// initialized object, which can be mutable during run time. Would this work for the thing not declared constexpr? Probably yes. The non-portable extension of Clang is 
+// [[require_constant_initialization]]
 
 int main()
 {
