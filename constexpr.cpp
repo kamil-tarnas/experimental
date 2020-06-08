@@ -13,6 +13,20 @@ constexpr int Square(int value)
 // initialized object, which can be mutable during run time. Would this work for the thing not declared constexpr? Probably yes. The non-portable extension of Clang is 
 // [[require_constant_initialization]]
 
+// Recent knowledge - in C++20 there is constinit keyword, which does just that! It implies being initialized at compile time, but the variable can be modified during run time!
+
+
+// The C++ Programming Language by Stroustrup might shed some light on the standard requirements for this topic:
+
+//correct those lines!!!!
+// const int dmv = 17; // dmv is a named constant
+// int var = 17; // var is not a constant
+// constexpr double max1 = 1.4∗square(dmv); // OK if square(17) is a constant expression
+// constexpr double max2 = 1.4∗square(var); // error : var is not a constant expression
+// const double max3 = 1.4∗square(var); // OK, may be evaluated at run time
+
+// constexpr specified function that is used in case label? Is that possible?
+
 int main()
 {
    // Probably will be initialized during compile time and put into data segment of memory even without the constexpr specifier
