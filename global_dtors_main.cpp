@@ -5,6 +5,8 @@
 
 // Check the initialization of static objects and the order of destruction
 
+#include "global_dtors.h"
+
 int main()
 {
    return 0;
