@@ -4,6 +4,7 @@
 // std::atexit()
 
 // Check the initialization of static objects and the order of destruction
+// With the default linker seems to be in the order of files passed to g++
 
 #include "global_dtors.h"
 
