@@ -47,6 +47,7 @@ T& AssocStringContainer::operator[](std::string string)
    // std::move? Locality principle? push_back versus emplace_back?
    // Both are overloaded on r-value references &&
    // Perfect forwarding and piecewise-construct?
+   // Uniform initialization use?
    // mStorage.push_back({string, 0});
    mStorage.push_back(std::move(newElement)); // Will it be forwarded? Ctor is not needed to be called, so no?
    // The destructor was not called is it save to return newElem?
