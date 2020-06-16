@@ -1,10 +1,22 @@
 #include <iostream>
 
+struct A
+{
+   int b;
+   int c;
+   char d;
+   float e;
+   char f;
+};
+
 int main()
 {
    int* ptr_p;
    int theNumber = 6;
    int theSecondNUmber = 42;
+   A myStructA;
+
+   std::cout << sizeof(((A*)0)->e) << std::endl;
 
    ptr_p = &theNumber;
 
