@@ -9,4 +9,5 @@ int main()
    ptr_p = &theNumber;
 
    std::cout << sizeof(*ptr_p++ + 1) << std::endl; 
+   std::cout << sizeof(*((int*)0)) << std::endl;
 }
