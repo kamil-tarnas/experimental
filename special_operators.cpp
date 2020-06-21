@@ -1,6 +1,7 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <iostream>
 
 // Move template to .h file?
 template<typename T>
@@ -29,13 +30,13 @@ private:
 // function body and does not have any dependency with
 // the caller of operator[]
 template<typename T>
-T& AssocStringContainer::operator[](std::string string)
+T& AssocStringContainer<T>::operator[](std::string string)
 {
-   for (const auto&: mStorage)
+   for (auto& elem: mStorage)
    {
-      if (mStorage.first == string)
+      if (elem.first == string)
       {
-         return mStorage.second;
+         return elem.second;
       }
    }
    // Do not create a new variable? Create r-value of {string, T}
@@ -60,15 +61,29 @@ T& AssocStringContainer::operator[](std::string string)
 
 int main()
 {
-   AssocStringContainer myAssocContainer;
+   AssocStringContainer<int> myAssocContainer;
    
    int numberOfItemsToAdd = 9;
 
-   for (int element = 0; element < myAssocContainer; element++)
+   for (int element = 0; element < numberOfItemsToAdd; element++)
    {
-      myAssocContainer[std::string("element" + std::to_string(element))];
+      myAssocContainer[std::string("elem" + std::to_string(element))];
    }
+
+   // Should deduce reference - but the ref ("&") written explicitly
+   auto& referenceToElem = myAssocContainer["elem2"];
+   std::cout << &referenceToElem << " | " << &myAssocContainer["elem2"] << std::endl;
    
+   // Should deduce int (without a ref ("&")), because ref was not written explicitly
+   auto notAreferenceToElem = myAssocContainer["elem3"];
+   std::cout << &notAreferenceToElem << " | " << &myAssocContainer["elem3"] << std::endl;
+
+   // Need to read some more about auto type deduction rules
+
+   // Should be a copy of container element
+   int copyOfElem = myAssocContainer["elem4"];
+   std::cout << &copyOfElem << " | " << &myAssocContainer["elem4"] << std::endl;
+
    // Print the elements - should have std::cout << operator overloaded
 	return 0;
 }
