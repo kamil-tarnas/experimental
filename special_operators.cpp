@@ -2,6 +2,62 @@
 #include <utility>
 #include <string>
 #include <iostream>
+#include <complex>
+
+// Templetize by what?
+struct FunctionObject
+{
+   // Only operator() overloaded overloads
+   int operator()(int);
+   double operator()(double);
+   // Returning paired ints
+   std::pair<int, int> operator()(int, int);
+};
+
+// Define only (int) overload, the rest are not used right now
+int FunctionObject::operator()(int arg)
+{
+   return arg;
+};
+
+// Function object can take non-trivail operations as arguments? 
+// But which actions cannot be passed to function as a normal parameters? 
+// Is the advantage the fact that function object can hold non-static state?
+// (static state can be held by a function by defining a static variable inside its body)
+
+// The :: operator cannot be used in specyfing using declaration?
+//using std::complex;
+using complex = std::complex<double>;
+//using std::complex;
+//using Com complex<double>;
+//using complex com
+//typedef complex<double> complex
+class Add
+{
+   // Implicitly private, this will be the state held by instantiated functor
+   complex value;
+
+public:
+   // Add would just save the value in functor state variable
+   Add(complex c)
+      : value{c}
+   {
+   }
+
+   Add(double re, double im)
+      // What is really created here? A pair? Check this!
+      : value{{re, im}}
+   {
+   }
+
+   void operator()(complex& c) const
+   {
+      // Add the held state value to the argument that operator() is called with
+      c += value;
+   }
+
+};
+
 
 // Move template to .h file?
 template<typename T>
@@ -63,6 +119,8 @@ int main()
 {
    AssocStringContainer<int> myAssocContainer;
    
+   
+
    int numberOfItemsToAdd = 9;
 
    for (int element = 0; element < numberOfItemsToAdd; element++)
@@ -84,6 +142,15 @@ int main()
    int copyOfElem = myAssocContainer["elem4"];
    std::cout << &copyOfElem << " | " << &myAssocContainer["elem4"] << std::endl;
 
-   // Print the elements - should have std::cout << operator overloaded
+   // Function object
+   FunctionObject functor;
+   
+   int functorArgument = 42;
+   int mySubsequentInteger = functor(functorArgument);
+   
+   std::cout << mySubsequentInteger << std::endl;
+
+
+
 	return 0;
 }
