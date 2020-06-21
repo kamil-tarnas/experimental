@@ -8,8 +8,8 @@ class AssocStringContainer
 {
 public:
 	// Special functions
-	AssocStringContainer();
-	~AssocStringContainer();
+	AssocStringContainer() = default;
+	~AssocStringContainer() = default;
 
 	// Interface functions
    T& operator[](std::string);
@@ -60,5 +60,15 @@ T& AssocStringContainer::operator[](std::string string)
 
 int main()
 {
+   AssocStringContainer myAssocContainer;
+   
+   int numberOfItemsToAdd = 9;
+
+   for (int element = 0; element < myAssocContainer; element++)
+   {
+      myAssocContainer[std::string("element" + std::to_string(element))];
+   }
+   
+   // Print the elements - should have std::cout << operator overloaded
 	return 0;
 }
