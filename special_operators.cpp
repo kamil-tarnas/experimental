@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <complex>
+#include <list>
 
 // Templetize by what?
 struct FunctionObject
@@ -57,6 +58,56 @@ public:
    }
 
 };
+
+
+/* COMMENTED OUT TEMPORARILY
+
+// for_each implementation?
+// Is a calable object just a type?
+// Template template parameters are needed to pass the arguments?
+template<typename ContainerType, typename ElementType, typename Action>
+void for_each_complicated(ContainerType<ElementType>::iterator beginIter, // This is the same type, could be just typename Iter
+              ContainerType<ElementType>::iterator endIter,
+              Action action)
+{
+   while (beginIter < endIter)
+   {
+      action(*beginIter);
+      beginIter++;
+   }
+}
+
+*/
+
+//The alternative
+template<typename Iter, typename Callable>
+Callable for_each(Iter begin, Iter end, Callable action)
+{
+   while (begin != end) 
+   {
+      action(*begin++); 
+   }
+   return action; 
+}
+
+
+// Free function for adding to both std::vector and std::list
+// Make the parameters optional by passing a pointer to a vec and list?
+// for_each requires something callable, so a function object holdig a state is somehow
+// ideal. The function of punction pointer to a function having a global 
+// state is not ideal, mainly because that global state, all that comes with managing it, 
+// locality principle and so on...
+template<typename T>
+void AddToVectorAndList(std::vector<T>& vector, std::list<T>& list, complex z)
+{
+   // addFunctor() creates a temporary, which is then copied as an argument to for_each?
+   // If yes then it is very suboptimally done? Not really so, the argument will be then
+   // used repeatedly by for_each (during loop execution)
+   for_each(vector.begin(), vector.end(), Add{2, 3}); // Constructor with initializer list is needed here?
+   for_each(list.begin(), list.end(), Add{z});
+}
+
+
 
 
 // Move template to .h file?
