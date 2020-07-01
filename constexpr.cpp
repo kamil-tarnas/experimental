@@ -26,6 +26,8 @@ constexpr int Square(int value)
 // const double max3 = 1.4∗square(var); // OK, may be evaluated at run time
 
 // constexpr specified function that is used in case label? Is that possible?
+//
+// New thingg in C++20: constinit, consteval (immediate invocation, immediate function, that is, every call to the function must produce a compile-time constant)
 
 int main()
 {
