@@ -5,7 +5,7 @@
 #include <complex>
 #include <list>
 
-// Templetize by what?
+// Templatize by what?
 struct FunctionObject
 {
    // Only operator() overloaded overloads
@@ -51,12 +51,18 @@ public:
    {
    }
 
-   void operator()(complex& c) const // Latest fail - this is the function mentioned!
+   // d) Function is const (non-modifying the state of object and argument should be const to bind to r-values
+   void operator()(complex& c) const
    {
       // Add the held state value to the argument that operator() is called with
+	  // To the comments marked as d) - the arument cannot be const, because is modified in the body of operator()
+      c += value; // Overload for l-value and r-value references? What will happen to the temporarily created Add object?
+   } /// I think this should handle both r- and l- value references, for different use cases
+
+   void operator()(complex&& c) const
+   {
       c += value;
    }
-
 };
 
 
@@ -108,6 +114,7 @@ void AddToVectorAndList(std::vector<T>& vector, std::list<T>& list, complex z)
    // used repeatedly by for_each (during loop execution)
    //
    // That's ambiguous - the ambiguity is with std::for_each, probably because of ADL
+	// r-value (like Add{2,3}) needs to be taken into consideration in the template definition? (experimental::for_each?)
    experimental::for_each(vector.begin(), vector.end(), Add{2, 3}); // Constructor with initializer list is needed here?
    experimental::for_each(list.begin(), list.end(), Add{z}); // Will that create a temporary? Would it be moved?
 }
@@ -175,8 +182,6 @@ int main()
 {
    AssocStringContainer<int> myAssocContainer;
    
-   
-
    int numberOfItemsToAdd = 9;
 
    for (int element = 0; element < numberOfItemsToAdd; element++)
@@ -211,5 +216,5 @@ int main()
    complex z{1, 2};
    AddToVectorAndList(vec, list, z);
 
-	return 0;
+   return 0;
 }

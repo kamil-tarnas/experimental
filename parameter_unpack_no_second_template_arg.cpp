@@ -21,7 +21,8 @@ void VariadicPrint(Args... arguments)
 {
    using namespace std;
 
-   cout << arguments... << endl; // should << the argument? Can it be expanded like this?
+   cout << arguments...; // should << the argument? Can it be expanded like this?
+   cout << endl;
    VariadicPrint(arguments...);
 }
 
