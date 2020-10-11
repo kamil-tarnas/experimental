@@ -65,6 +65,12 @@ public:
    }
 };
 
+// Declare and define user-defined suffix for Add class objects
+constexpr Add operator""_Add(long double c)
+{
+   return Add(c);
+}
+
 
 /* COMMENTED OUT TEMPORARILY
 
@@ -118,8 +124,6 @@ void AddToVectorAndList(std::vector<T>& vector, std::list<T>& list, complex z)
    experimental::for_each(vector.begin(), vector.end(), Add{2, 3}); // Constructor with initializer list is needed here?
    experimental::for_each(list.begin(), list.end(), Add{z}); // Will that create a temporary? Would it be moved?
 }
-
-
 
 
 // Move template to .h file?
