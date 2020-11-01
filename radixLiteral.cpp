@@ -3,7 +3,7 @@
 
 int main()
 {
-   std::cout << 3_b3;
+   std::cout << 344_b3;
    return 0;
 }
 

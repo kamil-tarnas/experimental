@@ -1,5 +1,8 @@
 // Implementation of user-defined literals for different base number literals
 
+#include<type_traits> // for enable_if, TODO: Any other option to disambiguate the template function call?
+#define _b(numeral_system)
+
 // TODO: Macros for enabling specific features if compiled with different versions of C++ standard
 // TODO: Iterative version (can work for C++14 and beyond)
 
@@ -14,7 +17,9 @@
 // No non-constexpr version needed, user-defined literals were introduced in C++11, the same standard as for constexpr
 template<char...>
 constexpr int operator"" _b3(); // TODO: Any macro magic to change the _b3 to, for example, _b6 in case of senary based system? 
-                                //Need to just replace the hardcoded number in lteral suffix and implementation
+                                // Need to just replace the hardcoded number in literal suffix and implementation
+								// Introduce macro for literal replacing and second template argument for the numeric system?
+								// Introduce the least amount of macro substitution - only in operator""() implementation?
 
 template<typename Data> // TODO: Artificial constrains on the types that this template could be instantiated with?
 constexpr Data pow(Data arg, int power)
@@ -23,7 +28,8 @@ constexpr Data pow(Data arg, int power)
    // Could be done in one template or template partial specialization would be needed?
    return power == 0 ? 1.0 : arg * pow(arg, power - 1); // TODO: Swap the actual calculations with base case for more efficiency? Mark calc more likely?
 }
-                                
+
+// TODO: Ambiguous call in case of one template parameter - disambiguation presently done with enable_if(tail > 0)
 // Base case for variadic template - a helper function
 template<char c>
 constexpr int b3Helper() // NO FUNCTION  TO MATCH - SHOULD WE HERE ADD CHAR ARGUMENT??????????????
@@ -33,15 +39,17 @@ constexpr int b3Helper() // NO FUNCTION  TO MATCH - SHOULD WE HERE ADD CHAR ARGU
 }
 
 template<char c, char... tail>
-constexpr int b3Helper()
+std::enable_if<(sizeof...(tail) > 0), int>::type // TODO: Will that return a constexpr qualified int 'constexpr int'?
+//constexpr int
+b3Helper()
 {
    // TODO: Assert or other check
-   return ((c - '0') * pow(3, sizeof...(tail))) + b3Helper(tail...); // TODO: (c-'0') would get the actual int representation 
+   return ((c - '0') * pow(3, sizeof...(tail))) + b3Helper<tail...>(); // TODO: (c-'0') would get the actual int representation
 }
 
 template<char... chars>
 constexpr int operator"" _b3()
 {
-   return b3Helper(chars...);
+   return b3Helper<chars...>();
 }
 
