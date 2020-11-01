@@ -32,7 +32,7 @@ constexpr Data pow(Data arg, int power)
 // TODO: Ambiguous call in case of one template parameter - disambiguation presently done with enable_if(tail > 0)
 // Base case for variadic template - a helper function
 template<char c>
-constexpr int b3Helper() // NO FUNCTION  TO MATCH - SHOULD WE HERE ADD CHAR ARGUMENT??????????????
+constexpr int b3Helper() // No function to match in case of ambiguous call without enable_if
 {
    // TODO: static_assert or other kind of check
    return (c - '0'); // TODO: Conversion from char to int is needed to give meaningful result? Or ASCII cares about it? Can this be instantiated with modified char template argment on the caller side?
@@ -47,6 +47,8 @@ b3Helper()
    return ((c - '0') * pow(3, sizeof...(tail))) + b3Helper<tail...>(); // TODO: (c-'0') would get the actual int representation
 }
 
+// TODO: Generalize with a macro printing a proper version of this function and introduce additional
+//       template parameter substituted with the macro arg?
 template<char... chars>
 constexpr int operator"" _b3()
 {
