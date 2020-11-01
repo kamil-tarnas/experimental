@@ -1,0 +1,21 @@
+RSI and RDI used for parameter passing
+NOPL is shorter NOP instruction for alignment than NOPW
+
+0000000000400510 <add5AndAdd>:
+  400510:	83 07 05             	addl   $0x5,(%rdi)
+  400513:	8b 06                	mov    (%rsi),%eax
+  400515:	83 c0 05             	add    $0x5,%eax
+  400518:	89 06                	mov    %eax,(%rsi)
+  40051a:	03 07                	add    (%rdi),%eax
+  40051c:	c3                   	retq   
+  40051d:	0f 1f 00             	nopl   (%rax)
+
+
+0000000000400510 <add5AndAdd>:
+  400510:	83 07 05             	add    DWORD PTR [rdi],0x5
+  400513:	8b 06                	mov    eax,DWORD PTR [rsi]
+  400515:	83 c0 05             	add    eax,0x5
+  400518:	89 06                	mov    DWORD PTR [rsi],eax
+  40051a:	03 07                	add    eax,DWORD PTR [rdi]
+  40051c:	c3                   	ret    
+  40051d:	0f 1f 00             	nop    DWORD PTR [rax]
