@@ -1,4 +1,10 @@
+// 1. Move it outside of BinarySearchTree - make node not a nested class
+// 2. Make Node a plain class rather than template class
+// 3. template class nested in template class
+
+
 #include <iostream>
+
 
 template <typename NodeData>
 class BinarySearchTree
@@ -10,8 +16,13 @@ class BinarySearchTree
 	class Node
 	{
 	public:
-		Node(Data data);
-		~Node();
+		Node(Data data)
+		 :mData(data), mLeft_p(nullptr), mRight_p(nullptr)
+		 {};
+		Node()
+		 :mLeft_p(nullptr), mRight_p(nullptr)
+		 {};
+		//~Node();
 	private:
 		Data mData;
 		Node<Data>* mLeft_p;
@@ -37,18 +48,19 @@ public:
 	NodeData FindMin();
 	NodeData FindMax();
 
-	~BinarySearchTree();
+	//~BinarySearchTree();
 private:
 
 	Node<NodeData> mRoot;
 };
 
-// I forsee it will be problematic :)
-template <typename Data>
-BinarySearchTree<Data>::Node<Data>::Node(data)
-	:mData(data), mLeft_p(nullptr), mRight_p(nullptr)
-{
-}
+
+//// I forsee it will be problematic :)
+//template <typename NodeData, template<typename> typename Data>
+//BinarySearchTree<NodeData>::Node<Data>::Node(data)
+//	:mData(data), mLeft_p(nullptr), mRight_p(nullptr)
+//{
+//}
 
 template <typename NodeData>
 BinarySearchTree<NodeData>::BinarySearchTree()
