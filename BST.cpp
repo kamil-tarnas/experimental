@@ -285,12 +285,21 @@ BinarySearchTree<NodeData>& BinarySearchTree<NodeData>::operator()(std::function
 	return (*this);
 }
 
+// TODO: Can return void? Return parameter not used at all?
 template <typename NodeData>
 BinarySearchTree<NodeData>&
 	BinarySearchTree<NodeData>::operator_function_call_internal
 		(Node<NodeData>* node_p, std::function<void(NodeData&)> functor)
 {
+	if (!node_p)
+	{
+		return (*this);
+	}
+
 	functor(node_p->mData);
+
+	BinarySearchTree<NodeData>::operator_function_call_internal(node_p->mLeft_p, functor);
+	BinarySearchTree<NodeData>::operator_function_call_internal(node_p->mRight_p, functor);
 }
 
 // With a helper function - no other way around - cannot create MaxDepth(Node<NodeData>* node_p = mRoot)
