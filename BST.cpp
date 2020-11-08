@@ -2,11 +2,30 @@
 // 2. Make Node a plain class rather than template class
 // 3. template class nested in template class
 
+// TODO: BST and DFS with a function pointer for an action to do
+
+// DFT with a policy on a class enum non-type template parameter
+// Type of DFS can be implemented using exceptions (?)
 
 #include <iostream>
 #include <cstring>
+#include <functional>
+
+#define DEBUG
+
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 //TODO: Copy-wise elements
 // this header includes too much and element-wise copy will be probably compiled to memcpy like routine in asm
+
+enum class OrderType
+{
+	PRE_ORDER,
+	IN_ORDER,
+	POST_ORDER
+};
 
 template <typename NodeData>
 class BinarySearchTree
@@ -54,6 +73,15 @@ public:
 	std::size_t MaxDepth();
 	std::size_t MaxDepth_iterative();
 
+	// template and an argument for DFS type?
+	//template <OrderType order> // std::function<void(Node<NodeData>*) should be generic!!
+	BinarySearchTree<NodeData>& operator()(std::function<void(NodeData&)>); //std::function or some other callable as an argument?
+	BinarySearchTree<NodeData>& operator_function_call_internal(Node<NodeData>* node_p, std::function<void(NodeData&)>);
+
+	//template <OrderType order>
+	void Bfs();
+	void Bfs_internal(Node<NodeData>* node_p);
+
 	//~BinarySearchTree();
 private:
 
@@ -87,6 +115,37 @@ template <typename NodeData>
 BinarySearchTree<NodeData>::BinarySearchTree(NodeData nodeData)
 	:mRoot(nodeData)
 {
+}
+
+template <typename NodeData>
+void BinarySearchTree<NodeData>::Bfs()
+{
+	Node<NodeData>* node_p = mRoot;
+
+	#ifdef DEBUG
+	std::cout << "BFS: \n";
+	#endif
+
+	return BinarySearchTree<NodeData>::Bfs_internal(node_p);
+	// ADL (is it really it?) can figure out the namespace - the code below is perfectly fine
+	// return Bfs_internal(node_p);
+}
+
+template <typename NodeData>
+void BinarySearchTree<NodeData>::Bfs_internal(Node<NodeData>* node_p)
+{
+	if (!node_p)
+	{
+		return;
+	}
+
+	#ifdef DEBUG
+	std::cout << node_p->mData << "\n";
+	#endif
+
+	BinarySearchTree<NodeData>::Bfs_internal(node_p->mLeft_p);
+	BinarySearchTree<NodeData>::Bfs_internal(node_p->mRight_p);
+
 }
 
 //TODO: This can also be implemented recursively - take the alternative approach
@@ -213,6 +272,27 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 
 }
 
+template <typename NodeData>
+BinarySearchTree<NodeData>& BinarySearchTree<NodeData>::operator()(std::function<void(NodeData&)> functor)
+{
+	Node<NodeData>* node_p = mRoot;
+	// DFS pre-order
+	// use(node_p);
+	functor(node_p->mData);
+	// pass the std::function
+	BinarySearchTree<NodeData>::operator_function_call_internal(node_p->mLeft_p, functor);
+	BinarySearchTree<NodeData>::operator_function_call_internal(node_p->mRight_p, functor);
+	return (*this);
+}
+
+template <typename NodeData>
+BinarySearchTree<NodeData>&
+	BinarySearchTree<NodeData>::operator_function_call_internal
+		(Node<NodeData>* node_p, std::function<void(NodeData&)> functor)
+{
+	functor(node_p->mData);
+}
+
 // With a helper function - no other way around - cannot create MaxDepth(Node<NodeData>* node_p = mRoot)
 // default arguments can be a literal or a global scope
 //https://stackoverflow.com/questions/32399730/default-arguments-as-non-static-member-variables/32399835
@@ -274,6 +354,14 @@ int main()
 	bst2.Insert(6);
 	bst2.Insert(9);
 	bst2.Insert(8);
+
+	bst.Bfs();
+
+	#ifdef DEBUG
+	// TODO: Make the bst deduce the argument of std::function to be the same as NodeData (already deduced?)
+	// Can implicitly pass the parameters?
+	bst([](int&){std::cout << "Woo\n";});
+	#endif
 
 	std::cout << bst.MaxDepth() << " - here" << std::endl;
 	std::cout << bst2.MaxDepth() << " - here2" << std::endl;
