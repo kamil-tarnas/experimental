@@ -75,6 +75,7 @@ public:
 
 	// template and an argument for DFS type?
 	//template <OrderType order> // std::function<void(Node<NodeData>*) should be generic!!
+	// TODO: Version that instead of taking NodeData& runs from root on default
 	BinarySearchTree<NodeData>& operator()(std::function<void(NodeData&)>); //std::function or some other callable as an argument?
 	BinarySearchTree<NodeData>& operator_function_call_internal(Node<NodeData>* node_p, std::function<void(NodeData&)>);
 
