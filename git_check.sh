@@ -1,3 +1,4 @@
+#!/bin/bash
 #map for holding SHA and weight pair
 declare -A weights
 
