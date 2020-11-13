@@ -7,9 +7,11 @@
 // DFT with a policy on a class enum non-type template parameter
 // Type of DFS can be implemented using exceptions (?)
 
+// TODO: Sort out the includes
 #include <iostream>
 #include <cstring>
 #include <functional>
+#include <cassert>
 
 #define DEBUG
 
@@ -51,6 +53,8 @@ class BinarySearchTree
 	};
 
 public:
+	// Constructor taking std::initializer_list for constructing the tree
+	// Think of any possible hints and shortcuts that could be taken here
 	BinarySearchTree();
 	BinarySearchTree(Node<NodeData> node);
 	BinarySearchTree(NodeData nodeData);
@@ -69,8 +73,16 @@ public:
 	NodeData FindMin();
 	NodeData FindMax();
 
+	//TODO: test those
+	// This should be called only internally - given node_p it won't give good answer
+	// based on classical "depth" definition - corrected already!!!
+	// MaxDepth(Node<NodeData>) should be private here (?)
+	// Node is an implementation detail and should not be visible to the customer of this code
 	std::size_t MaxDepth(Node<NodeData>* node_p);
 	std::size_t MaxDepth();
+	// TODO: Given the data search for it and return back the depth of that argument
+	std::size_t MaxDepth(const NodeData& data);
+
 	std::size_t MaxDepth_iterative();
 
 	// template and an argument for DFS type?
@@ -79,10 +91,14 @@ public:
 	BinarySearchTree<NodeData>& operator()(std::function<void(NodeData&)>); //std::function or some other callable as an argument?
 	BinarySearchTree<NodeData>& operator_function_call_internal(Node<NodeData>* node_p, std::function<void(NodeData&)>);
 
+	//TODO: Leaf to leaf path
+
 	//template <OrderType order>
 	void Bfs();
 	void Bfs_internal(Node<NodeData>* node_p);
 
+	// TODO: Detach the destruction on other thread?
+	// TODO: Clear() method?
 	//~BinarySearchTree();
 private:
 
@@ -195,13 +211,14 @@ void BinarySearchTree<NodeData>::Insert(NodeData data)
 template <typename NodeData>
 std::size_t BinarySearchTree<NodeData>::MaxDepth(Node<NodeData>* node_p)
 {
+	// TODO: 'if' statement could be merged into one, but it does not matter probably
 	if (node_p == nullptr)
 	{
 		return 0;
 	}
 	if (node_p->mLeft_p == nullptr && node_p->mRight_p == nullptr)
 	{
-		return 1;
+		return 0;
 	}
 	else
 	{
@@ -209,7 +226,6 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth(Node<NodeData>* node_p)
 		std::size_t rightSubtree = MaxDepth(node_p->mRight_p);
 		return 1 + (leftSubtree > rightSubtree ? leftSubtree : rightSubtree);
 	}
-
 }
 
 // TODO: Are those two functions really needed?
@@ -217,7 +233,7 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth(Node<NodeData>* node_p)
 template <typename NodeData>
 std::size_t BinarySearchTree<NodeData>::MaxDepth()
 {
-	//TODO: The common part could be wrapped in a subroutine
+	//TODO: The common part could be wrapped in a subroutine that will be inlined (make sure that it is)
 	Node<NodeData>* node_p = mRoot;
 	if (node_p == nullptr)
 	{
@@ -231,11 +247,13 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth()
 	{
 		std::size_t leftSubtree = MaxDepth(node_p->mLeft_p);
 		std::size_t rightSubtree = MaxDepth(node_p->mRight_p);
-		return (leftSubtree > rightSubtree ? leftSubtree : rightSubtree);
+		return 1 + (leftSubtree > rightSubtree ? leftSubtree : rightSubtree);
 	}
-
 }
 
+// TODO: Policy for allocating the stack on stack (sic!)
+// TODO: Stress it with different extreme-valued parameters
+// TODO: the same function with policy template argument of {iterative, recursive}
 template <typename NodeData>
 std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 {
@@ -243,7 +261,7 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 
 	// Allocate space for a stack of nodes
 	// Push on stack the address of a node
-	// 20 is an arbitrary number
+	// 20 is an arbitrary number // TODO: Parametrize the 20 number
 	Node<NodeData>* nodeStack = new Node<NodeData>*[20];
 	std::size_t currentStackLimit = 20;
 	std::size_t currentStackSize = 0;
@@ -252,25 +270,66 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 	std::size_t rightSubtreeSize = 0;
 	std::size_t treeDepth = 0;
 
-	if (currentStackSize == currentStackLimit)
-	{
-		Node<NodeData>* oldStorage = nodeStack;
-		Node<NodeData>* newStorage = new Node<NodeData>*[currentStackLimit * 2];
-		std::memcpy(newStorage, oldStorage, sizeof(Node<NodeData>) * currentStackLimit);
-		delete oldStorage;
-		nodeStack = newStorage;
-		currentStackLimit *= 2;
-	}
+	//TODO: count when going up the tree and count when going down?
+	// currentMaxSubtreeSize -> incremented each time going down the tree and decremented during pop
+	// maxSubtreeSize -> compared with currentMaxSubtreeSize when going back (popping from the stack)
+	std::size_t currentSubtreeSize = 0;
+	std::size_t maxSubtreeSize = 0;
 
-	while (*node_pp != nullptr)
+	// TODO: Consider this expression
+	while (*node_pp != nullptr) // TODO: Do it until *node_pp == mRoot coming back from right node
 	{
+		// GO LEFT, GO LEFT, IF LEFT IS NULLPTR, GO RIGHT, IF RIGHT IS NULL THEN POP
+		// Need to keep the pointers because we need to go back in the tree
 		// GO LEFT, IF NULLPTR POP AND GO RIGHT, SET THE POINTER TO LEFT, REPEAT
 		// AT every back step increment? Or just keep the value of maximal stack count?
 		// At every pop we decide which subtree was bigger?
-		leftSubtreeSize++;
-		node_pp = &(*node_pp)->mLeft_p;
+		if ((*node_pp)->mLeft_p != nullptr) //TODO: Not correct - if we go back then this would go in circles
+		{
+			// Push the element on stack
+			node_pp = &(*node_pp)->mLeft_p;
+			//leftSubtreeSize++;
+			currentSubtreeSize++;
+		}
+		else
+		{
+			// Pop the element from the stack and check right
+			node_pp = &nodeStack[currentStackSize];
+			currentStackSize--;
+
+			if ((*node_pp)->mRight_p != nullptr) //TODO: Not correct - if we go back then this would go in circles
+			{
+				// Push the element on stack
+				node_pp = &(*node_pp)->mLeft_p;
+				//leftSubtreeSize++;
+				currentSubtreeSize++;
+			}
+
+			if (currentSubtreeSize > maxSubtreeSize)
+			{
+				maxSubtreeSize = currentSubtreeSize;
+			}
+			currentSubtreeSize--;
+		}
+
+		// stack pointer being a pointer or var being a element number of array
+		// the latter would probably exploit the data locality principle
+
+		if (currentStackSize == currentStackLimit)
+		{
+			Node<NodeData>* oldStorage = nodeStack;
+			Node<NodeData>* newStorage = new Node<NodeData>*[currentStackLimit * 2];
+			std::memcpy(newStorage, oldStorage, sizeof(Node<NodeData>) * currentStackLimit);
+			delete[] oldStorage;
+			nodeStack = newStorage;
+			currentStackLimit *= 2;
+		}
 	}
 
+	// TODO: Need to return (after every pop?) the larger subtree path
+	// After we have reached the root
+	treeDepth = leftSubtreeSize > rightSubtreeSize ? leftSubtreeSize : rightSubtreeSize;
+	return treeDepth;
 }
 
 template <typename NodeData>
@@ -347,6 +406,39 @@ public:
 
 int main()
 {
+	// Example tree
+	// compile time different instantiation of POD types? macro? template?
+	// TODO: Any test-naming convention? pros? cons? and so on?
+	BinarySearchTree<int> bst_leftDepthBiased_rightElementBiased;
+	// Different insertion patterns // TODO: Should be tested in Insert() tests
+	// BFI (breadth first insert) - insert in BFS manner
+	// TODO: Any possible hints? Measure the time of insertion using this method versus other methods
+	bst_leftDepthBiased_rightElementBiased.Insert(15);
+	bst_leftDepthBiased_rightElementBiased.Insert(9);
+	bst_leftDepthBiased_rightElementBiased.Insert(30);
+	bst_leftDepthBiased_rightElementBiased.Insert(5);
+	bst_leftDepthBiased_rightElementBiased.Insert(11);
+	bst_leftDepthBiased_rightElementBiased.Insert(29);
+	bst_leftDepthBiased_rightElementBiased.Insert(45);
+	bst_leftDepthBiased_rightElementBiased.Insert(3);
+	bst_leftDepthBiased_rightElementBiased.Insert(10);
+	bst_leftDepthBiased_rightElementBiased.Insert(21);
+	bst_leftDepthBiased_rightElementBiased.Insert(41);
+	bst_leftDepthBiased_rightElementBiased.Insert(50);
+	bst_leftDepthBiased_rightElementBiased.Insert(2);
+	bst_leftDepthBiased_rightElementBiased.Insert(40);
+	bst_leftDepthBiased_rightElementBiased.Insert(42);
+	bst_leftDepthBiased_rightElementBiased.Insert(1);
+
+	// Test MaxDepth(Node<>*) for partial depth
+
+	// Test MaxDepth()
+	auto value = bst_leftDepthBiased_rightElementBiased.MaxDepth();
+	assert(("testTernary failed! 231_b3 != 28", value == std::size_t{5}));
+
+
+
+
 	BinarySearchTree<int> bst;
 	BinarySearchTree<int> bst2;
 	std::cout << sizeof(bst) << std::endl;
@@ -370,6 +462,8 @@ int main()
 	#ifdef DEBUG
 	// TODO: Make the bst deduce the argument of std::function to be the same as NodeData (already deduced?)
 	// Can implicitly pass the parameters?
+	// Immediately short-invoked lambda creation -
+	// TODO: The call could look like: bst([](int&){std::cout << "Woo\n";});
 	bst([](int&){std::cout << "Woo\n";});
 	#endif
 
