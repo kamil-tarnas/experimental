@@ -22,12 +22,12 @@
 //TODO: Copy-wise elements
 // this header includes too much and element-wise copy will be probably compiled to memcpy like routine in asm
 
-enum class OrderType
-{
-	PRE_ORDER,
-	IN_ORDER,
-	POST_ORDER
-};
+//enum class OrderType
+//{
+//	PRE_ORDER,
+//	IN_ORDER,
+//	POST_ORDER
+//};
 
 template <typename NodeData>
 class BinarySearchTree
@@ -52,6 +52,9 @@ class BinarySearchTree
 		Node<Data>* mRight_p;
 	};
 
+public:
+
+	// Type definitions:
 	// Will the dependent name template parameter be deduced if declared here?
 	enum class OrderType
 	{
@@ -60,7 +63,6 @@ class BinarySearchTree
 		POST_ORDER
 	};
 
-public:
 	// Constructor taking std::initializer_list for constructing the tree
 	// Think of any possible hints and shortcuts that could be taken here
 	BinarySearchTree();
@@ -93,7 +95,9 @@ public:
 
 	// Default argument versus a template with a specialization?
 	// Buffer size should be known, as we can keep track of the insertions to a tree
-	std::size_t MaxDepth_iterative();
+	// OrderType traversalOrder = OrderType::PRE_ORDER
+	//template <OrderType>
+	std::size_t MaxDepth_iterative(std::size_t buferSize = std::size_t{20});
 
 	// template and an argument for DFS type?
 	//template <OrderType order> // std::function<void(Node<NodeData>*) should be generic!!
@@ -266,8 +270,17 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth()
 // TODO: Policy for allocating the stack on stack (sic!)
 // TODO: Stress it with different extreme-valued parameters
 // TODO: the same function with policy template argument of {iterative, recursive}
+// TODO: Do it similarly with left and right subtree
+// template <template <typename T> class foo2
+/* DOES NOT WORK
+ * template <typename NodeData>
+std::size_t BinarySearchTree<NodeData>::
+MaxDepth_iterative<BinarySearchTree<NodeData>::OrderType::PRE_ORDER>(std::size_t buferSize)
+ */
 template <typename NodeData>
-std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
+//TODO: This is the method, but how to specialize it
+//template <BinarySearchTree<NodeData>::OrderType>
+std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative(std::size_t buferSize)
 {
 	// TODO: The same preamble as in MaxDepth() make it common
 	Node<NodeData>* node_p = mRoot;
@@ -356,7 +369,8 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 }
 
 template <typename NodeData>
-BinarySearchTree<NodeData>& BinarySearchTree<NodeData>::operator()(std::function<void(NodeData&)> functor)
+BinarySearchTree<NodeData>&
+BinarySearchTree<NodeData>::operator()(std::function<void(NodeData&)> functor)
 {
 	Node<NodeData>* node_p = mRoot;
 	// DFS pre-order
@@ -371,8 +385,8 @@ BinarySearchTree<NodeData>& BinarySearchTree<NodeData>::operator()(std::function
 // TODO: Can return void? Return parameter not used at all?
 template <typename NodeData>
 BinarySearchTree<NodeData>&
-	BinarySearchTree<NodeData>::operator_function_call_internal
-		(Node<NodeData>* node_p, std::function<void(NodeData&)> functor)
+BinarySearchTree<NodeData>::operator_function_call_internal(Node<NodeData>* node_p,
+		                                                    std::function<void(NodeData&)> functor)
 {
 	if (!node_p)
 	{
@@ -460,6 +474,19 @@ int main()
 	assert(("MaxDepth() failed!", value == std::size_t{5}));
 
 	auto value2 = bst_leftDepthBiased_rightElementBiased.MaxDepth_iterative();
+
+	// TODO: How to deduce the BinarySearchTree<int> part?
+	// Only possible way is to make it globally visible?
+	// if BinarySearchTree<float> won't be instantiated then it cannot be used
+	// TODO: Make a use of CTAD C++17 feature here???
+	// #if __cplusplus >= 201703L // if C++17 used
+//	auto value3 =
+//	  bst_leftDepthBiased_rightElementBiased.
+//	    MaxDepth_iterative<BinarySearchTree<NodeData>::OrderType::PRE_ORDER>(40);
+
+	auto value3 =
+	  bst_leftDepthBiased_rightElementBiased.
+	    MaxDepth_iterative(40);
 
 	std::cout << "value2: " << value2 << "\n";
 
