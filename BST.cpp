@@ -52,6 +52,14 @@ class BinarySearchTree
 		Node<Data>* mRight_p;
 	};
 
+	// Will the dependent name template parameter be deduced if declared here?
+	enum class OrderType
+	{
+		PRE_ORDER,
+		IN_ORDER,
+		POST_ORDER
+	};
+
 public:
 	// Constructor taking std::initializer_list for constructing the tree
 	// Think of any possible hints and shortcuts that could be taken here
@@ -83,6 +91,8 @@ public:
 	// TODO: Given the data search for it and return back the depth of that argument
 	std::size_t MaxDepth(const NodeData& data);
 
+	// Default argument versus a template with a specialization?
+	// Buffer size should be known, as we can keep track of the insertions to a tree
 	std::size_t MaxDepth_iterative();
 
 	// template and an argument for DFS type?
@@ -251,85 +261,98 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth()
 	}
 }
 
+// TODO: Change the order of the traversal by template specialization or default argument
+// TODO: Policy on the order of traversal - in order currently
 // TODO: Policy for allocating the stack on stack (sic!)
 // TODO: Stress it with different extreme-valued parameters
 // TODO: the same function with policy template argument of {iterative, recursive}
 template <typename NodeData>
 std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative()
 {
-	Node<NodeData>** node_pp = &mRoot;
+	// TODO: The same preamble as in MaxDepth() make it common
+	Node<NodeData>* node_p = mRoot;
+	if (mRoot == nullptr)
+	{
+		return 0;
+	}
+
+	if (node_p->mLeft_p == nullptr && node_p->mRight_p == nullptr)
+	{
+		return 0; // Should return one if we do not count the edges
+	}
 
 	// Allocate space for a stack of nodes
 	// Push on stack the address of a node
 	// 20 is an arbitrary number // TODO: Parametrize the 20 number
-	Node<NodeData>* nodeStack = new Node<NodeData>*[20];
+	// TODO: Any optimization needed -  this would always store adresses sizeof will
+	// be the same on a platform
+	Node<NodeData>** nodeStack = new Node<NodeData>*[20];
 	std::size_t currentStackLimit = 20;
+	// stack pointer being a pointer or var being a element number of array
+	// the latter would probably exploit the data locality principle
 	std::size_t currentStackSize = 0;
 
 	std::size_t leftSubtreeSize = 0;
 	std::size_t rightSubtreeSize = 0;
-	std::size_t treeDepth = 0;
 
 	//TODO: count when going up the tree and count when going down?
 	// currentMaxSubtreeSize -> incremented each time going down the tree and decremented during pop
 	// maxSubtreeSize -> compared with currentMaxSubtreeSize when going back (popping from the stack)
+	// TODO: Instead of this logic we can initialize the nodeStack array
+	// and iterate over the elements at the end to find the first zero-valued element
 	std::size_t currentSubtreeSize = 0;
 	std::size_t maxSubtreeSize = 0;
 
 	// TODO: Consider this expression
-	while (*node_pp != nullptr) // TODO: Do it until *node_pp == mRoot coming back from right node
+	while (node_p != nullptr || currentStackSize != 0) // TODO: Do it until *node_pp == mRoot coming back from right node
 	{
-		// GO LEFT, GO LEFT, IF LEFT IS NULLPTR, GO RIGHT, IF RIGHT IS NULL THEN POP
-		// Need to keep the pointers because we need to go back in the tree
-		// GO LEFT, IF NULLPTR POP AND GO RIGHT, SET THE POINTER TO LEFT, REPEAT
-		// AT every back step increment? Or just keep the value of maximal stack count?
-		// At every pop we decide which subtree was bigger?
-		if ((*node_pp)->mLeft_p != nullptr) //TODO: Not correct - if we go back then this would go in circles
+		// TODO: Stack could be defined here
+		while (node_p != nullptr)
 		{
-			// Push the element on stack
-			node_pp = &(*node_pp)->mLeft_p;
-			//leftSubtreeSize++;
+			// Push the current element on the stack and increment the stack size
+			nodeStack[currentStackSize++] = node_p;
+
+			// Get on the left leaf
+			node_p = node_p->mLeft_p;
+
+			// Increment the subtree size as we went down the tree
 			currentSubtreeSize++;
-		}
-		else
-		{
-			// Pop the element from the stack and check right
-			node_pp = &nodeStack[currentStackSize];
-			currentStackSize--;
 
-			if ((*node_pp)->mRight_p != nullptr) //TODO: Not correct - if we go back then this would go in circles
-			{
-				// Push the element on stack
-				node_pp = &(*node_pp)->mLeft_p;
-				//leftSubtreeSize++;
-				currentSubtreeSize++;
-			}
-
+			// TODO: Seems quite suboptimal
 			if (currentSubtreeSize > maxSubtreeSize)
 			{
 				maxSubtreeSize = currentSubtreeSize;
 			}
-			currentSubtreeSize--;
+
+			if (currentStackSize == currentStackLimit)
+			{
+				Node<NodeData>** oldStorage = nodeStack;
+				Node<NodeData>** newStorage = new Node<NodeData>*[currentStackLimit * 2];
+				std::memcpy(newStorage,
+							oldStorage,
+							sizeof(Node<NodeData>) * currentStackLimit);
+				delete[] oldStorage;
+				nodeStack = newStorage;
+				currentStackLimit *= 2;
+			}
 		}
 
-		// stack pointer being a pointer or var being a element number of array
-		// the latter would probably exploit the data locality principle
+		// Pop the current topmost element from the stack and decrement the stack size
+		node_p = nodeStack[--currentStackSize];
 
-		if (currentStackSize == currentStackLimit)
-		{
-			Node<NodeData>* oldStorage = nodeStack;
-			Node<NodeData>* newStorage = new Node<NodeData>*[currentStackLimit * 2];
-			std::memcpy(newStorage, oldStorage, sizeof(Node<NodeData>) * currentStackLimit);
-			delete[] oldStorage;
-			nodeStack = newStorage;
-			currentStackLimit *= 2;
-		}
+		// Decrement the subtree size as we went up the tree
+		currentSubtreeSize--;
+
+		// TODO: Any action if necessary
+
+		// Node and subtree has been visited, go on the right leaf
+		node_p = node_p->mRight_p;
 	}
 
 	// TODO: Need to return (after every pop?) the larger subtree path
 	// After we have reached the root
-	treeDepth = leftSubtreeSize > rightSubtreeSize ? leftSubtreeSize : rightSubtreeSize;
-	return treeDepth;
+	//treeDepth = leftSubtreeSize > rightSubtreeSize ? leftSubtreeSize : rightSubtreeSize;
+	return maxSubtreeSize - 1;
 }
 
 template <typename NodeData>
@@ -434,7 +457,13 @@ int main()
 
 	// Test MaxDepth()
 	auto value = bst_leftDepthBiased_rightElementBiased.MaxDepth();
-	assert(("testTernary failed! 231_b3 != 28", value == std::size_t{5}));
+	assert(("MaxDepth() failed!", value == std::size_t{5}));
+
+	auto value2 = bst_leftDepthBiased_rightElementBiased.MaxDepth_iterative();
+
+	std::cout << "value2: " << value2 << "\n";
+
+	assert(("MaxDepth_iterative", value2 == std::size_t{5}));
 
 
 
