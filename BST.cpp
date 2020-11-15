@@ -96,7 +96,7 @@ public:
 	// Default argument versus a template with a specialization?
 	// Buffer size should be known, as we can keep track of the insertions to a tree
 	// OrderType traversalOrder = OrderType::PRE_ORDER
-	//template <OrderType>
+	template <OrderType = OrderType::PRE_ORDER>
 	std::size_t MaxDepth_iterative(std::size_t buferSize = std::size_t{20});
 
 	// template and an argument for DFS type?
@@ -279,10 +279,11 @@ MaxDepth_iterative<BinarySearchTree<NodeData>::OrderType::PRE_ORDER>(std::size_t
  */
 template <typename NodeData>
 //TODO: This is the method, but how to specialize it
-//template <BinarySearchTree<NodeData>::OrderType>
+template <BinarySearchTree<NodeData>::OrderType>
 std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative(std::size_t buferSize)
 {
-	// TODO: The same preamble as in MaxDepth() make it common
+	// TODO: The same preamble as in MaxDepth() make it common and internal function
+	// BinarySearchTree class
 	Node<NodeData>* node_p = mRoot;
 	if (mRoot == nullptr)
 	{
@@ -316,6 +317,7 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative(std::size_t buferSize
 	std::size_t currentSubtreeSize = 0;
 	std::size_t maxSubtreeSize = 0;
 
+	// In-order traverse:
 	// TODO: Consider this expression
 	while (node_p != nullptr || currentStackSize != 0) // TODO: Do it until *node_pp == mRoot coming back from right node
 	{
@@ -367,6 +369,24 @@ std::size_t BinarySearchTree<NodeData>::MaxDepth_iterative(std::size_t buferSize
 	//treeDepth = leftSubtreeSize > rightSubtreeSize ? leftSubtreeSize : rightSubtreeSize;
 	return maxSubtreeSize - 1;
 }
+
+//template <typename NodeData>
+//// TODO: This is the method, but how to specialize it
+//// TODO: Does not work
+///*
+// * BST.cpp:375:11: error: invalid explicit specialization before ‘>’ token
+//  375 | template <>
+//      |           ^
+//BST.cpp:375:11: error: enclosing class templates are not explicitly specialized
+// */
+//// https://stackoverflow.com/questions/6773302/specialization-of-templated-member-function-in-templated-class
+//template <>
+//std::size_t
+//BinarySearchTree<NodeData>::MaxDepth_iterative
+//<BinarySearchTree<NodeData>::OrderType::IN_ORDER>(std::size_t buferSize)
+//{
+//  return std::size_t{42};
+//}
 
 template <typename NodeData>
 BinarySearchTree<NodeData>&
@@ -473,6 +493,23 @@ int main()
 	auto value = bst_leftDepthBiased_rightElementBiased.MaxDepth();
 	assert(("MaxDepth() failed!", value == std::size_t{5}));
 
+
+	// Perfectly okay with C++20
+	// With C++17 and earlier (is that a problem only in default parameters?):
+	/*
+	 * BST.cpp:282:11: error: ‘BinarySearchTree::OrderType’ is not a type
+  282 | template <BinarySearchTree<NodeData>::OrderType>
+      |           ^~~~~~~~~~~~~~~~~~~~~~~~~~
+BST.cpp: In function ‘int main()’:
+BST.cpp:480:55: error: ‘class BinarySearchTree<int>’ has no member named ‘MaxDepth_iterative’
+  480 |  auto value2 = bst_leftDepthBiased_rightElementBiased.MaxDepth_iterative();
+      |                                                       ^~~~~~~~~~~~~~~~~~
+BST.cpp:491:6: error: ‘class BinarySearchTree<int>’ has no member named ‘MaxDepth_iterative’
+  491 |      MaxDepth_iterative<BinarySearchTree<int>::OrderType::PRE_ORDER>(40);
+      |      ^~~~~~~~~~~~~~~~~~
+BST.cpp: In member function ‘BinarySearchTree<NodeData>& BinarySearchTree<NodeData>::operator_function_call_internal(BinarySearchTree<NodeData>::Node<NodeData>*, std::function<void(NodeData&)>) [with NodeData = int]’:
+	 * https://www.youtube.com/watch?v=7LPQWqAZZqs (?)
+	 */
 	auto value2 = bst_leftDepthBiased_rightElementBiased.MaxDepth_iterative();
 
 	// TODO: How to deduce the BinarySearchTree<int> part?
@@ -480,19 +517,19 @@ int main()
 	// if BinarySearchTree<float> won't be instantiated then it cannot be used
 	// TODO: Make a use of CTAD C++17 feature here???
 	// #if __cplusplus >= 201703L // if C++17 used
-//	auto value3 =
-//	  bst_leftDepthBiased_rightElementBiased.
-//	    MaxDepth_iterative<BinarySearchTree<NodeData>::OrderType::PRE_ORDER>(40);
 
+	// Can we omit the BinarySearchTree<int>::OrderType:???
 	auto value3 =
 	  bst_leftDepthBiased_rightElementBiased.
-	    MaxDepth_iterative(40);
+	    MaxDepth_iterative<BinarySearchTree<int>::OrderType::PRE_ORDER>(40);
+
+//	auto value3 =
+//	  bst_leftDepthBiased_rightElementBiased.
+//	    MaxDepth_iterative(40);
 
 	std::cout << "value2: " << value2 << "\n";
 
 	assert(("MaxDepth_iterative", value2 == std::size_t{5}));
-
-
 
 
 	BinarySearchTree<int> bst;
