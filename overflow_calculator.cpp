@@ -11,9 +11,9 @@ struct timestamps
 
 void isInRange()
 { 
-   //Expected output is: 1 1 1 . 0 0 0 0
-   const int numOfTests = 7;
-   timestamps stamps[numOfTests] = {{4, 10239, 5}, {10239, 10238, 3}, {5, 1, 7}, {10, 10238, 3}, {10, 10239, 5}, {10, 1, 7}, {10, 11, 12}}; //last should fail!
+   //Expected output is: 1 1 1 . 0 0 0 0 0
+   const int numOfTests = 8;
+   timestamps stamps[numOfTests] = {{4, 10239, 5}, {10239, 10238, 3}, {5, 1, 7}, {10, 10238, 3}, {10, 10239, 5}, {10, 1, 7}, {10, 11, 12}, {10, 10238, 3}}; //last should fail!
    for (int i = 0; i < numOfTests; i++)
    {
       bool isInRange= !((stamps[i].current - stamps[i].start) <= 0 && (stamps[i].current - stamps[i].end) >= 0);
