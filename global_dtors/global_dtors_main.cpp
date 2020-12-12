@@ -8,7 +8,12 @@
 
 #include "global_dtors.h"
 
+extern int global;
+extern int mySecondGlobal;
+
 int main()
 {
+   std::cout << global << "\n";
+   std::cout << mySecondGlobal << "\n";
    return 0;
 }
