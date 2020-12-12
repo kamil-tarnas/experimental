@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+NUMERAL_SYSTEM(5);
+
 using std::cout;
 
 // Class for case of normal globals
