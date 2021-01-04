@@ -26,7 +26,7 @@ void isInRange()
       std::cout << " NEW:" <<  isInRange;
       std::cout << " ALT: " << isInRangeAlt;
       std::cout << " OLD: " << isInRangeOld;
-      std::cout << " EXP2: " << isInRangeExp2;
+      //std::cout << " EXP2: " << isInRangeExp2;
       std::cout << " EXP3: " << isInRangeExp3;
       std::cout << " MACRO: " << isInRangeDlMacCe;
       std::cout << " EXP: " << isInRangeExp << "\n";
