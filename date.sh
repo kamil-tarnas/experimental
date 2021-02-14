@@ -3,6 +3,8 @@
 #generate random seeds and time offsets from the specified or current data - git diff and wc -l to see how big should be the offsets? - different offsets for added in comparison to deleted lines? weights assigning mechanism?
 #normalize the weight over some hours
 #search for the commits git filter branch and change the dates randomly
+#TODO: Make debug flag that could enable specific logs (like --debug flag) 
+#https://stackoverflow.com/questions/5972491/how-to-enable-or-disable-multiple-echo-statements-in-bash-ecript
 
 #Currently supporting only one commit (?)
 
@@ -85,6 +87,12 @@ declare -A normalizedHourOffsets
 #The array of SHAs in the range of requested commits (first index is the parent of the first commit that is processed)
 declare -a shas
 
+#Reading parameters
+sha1=$1
+sha2=$2
+staring_hour=$3
+ending_hour=$4
+
 #checks the number of commits given by SHA range
 git_commitRange()
 {
@@ -98,25 +106,26 @@ git_commitRange()
 #checks the number of lines added in between commits given by SHA arguments, third argument is a 
 git_checkLines()
 {
-   number_of_deleted_lines=$(git diff $2...$1 | grep "^\-[^-].*" | wc -l)
-   number_of_added_lines=$(git diff $2...$1 | grep "^\+[^+].*" | wc -l)
+  echo "Checking lines..."
+  number_of_deleted_lines=$(git diff $2...$1 | grep "^\-[^-].*" | wc -l)
+  number_of_added_lines=$(git diff $2...$1 | grep "^\+[^+].*" | wc -l)
 
-   #debug
-   echo "Number of deleted lines is: "$number_of_deleted_lines
-   echo "Number of added lines is: "$number_of_added_lines
+  #debug
+  echo "Number of deleted lines is: "$number_of_deleted_lines
+  echo "Number of added lines is: "$number_of_added_lines
   
-   #generate a random integer of interval [0, 32] #TODO: Random factor should probably be added later
-   let random_factor=$RANDOM/1000
+  #generate a random integer of interval [0, 32] #TODO: Random factor should probably be added later
+  let random_factor=$RANDOM/1000
    
-   #the importance of the commit - base is 100 - is not normalized currently
-   let weight=20*number_of_deleted_lines+80*number_of_added_lines+$random_factor
+  #the importance of the commit - base is 100 - is not normalized currently
+  let weight=20*number_of_deleted_lines+80*number_of_added_lines+$random_factor
 
-   #add weight to the map
-   weights[$1]=$weight
+  #add weight to the map
+  weights[$1]=$weight
 
-   #debug
-   echo "Weight of the commit $1 is: ""${weights["$1"]}" #does it need to be in parentheses?
-   #echo "${weights[dd71784357ead796e11f3e8581db4d629ab9cfe4]}"
+  #debug
+  echo "Weight of the commit $1 is: ""${weights["$1"]}" #does it need to be in parentheses?
+  #echo "${weights[dd71784357ead796e11f3e8581db4d629ab9cfe4]}"
 }
 
 #input parameters should be a range of commits
@@ -155,13 +164,21 @@ git_changeDates()
 #need to call it with $1 equal to commit SHA
 calculateDate()
 {
+  echo "Calulating date..."
+  
   #Calculate the current date
   time_localization=" +0100"
   date=$(LC_TIME=en_US date | sed -e 's/CET //')$time_localization
   
   #Sun Feb 14 14:01:04 2021 +0100 as in git log (?)
   echo $date
-
+  
+  declare -a dateDecomposed
+  dateDecomposed=($date)
+  
+  dateDecomposed[3]+=1;
+  echo "Decomposed date is: "${dateDecomposed[@]}""
+  
   #add date to the map #TODO: Needs calculations of the new date!!!
   dates[$1]=$date
 
@@ -172,6 +189,9 @@ calculateDate()
 #pass date as $1
 modifyDate()
 {
+  #$ date -u -d @360 +'%-Mm %-Ss'
+  #6m 0s
+
   #This is extracting the hour currently
   hour=$(echo $1 | awk '{print $4}')
   echo $hour
@@ -209,10 +229,10 @@ normalizeWeights()
 }
 
 #Check the range of commits to be processed
-git_commitRange "$1" "$2"
+git_commitRange "$sha1" "$sha2"
 
 #Firstly, extract the commits to be processed
-git_storeShas "$1" "$2"
+git_storeShas "$sha1" "$sha2"
 
 #The next operation is to get the weights of the commits #TODO:Wrap it in a function...
 for i in "${!shas[@]}"
