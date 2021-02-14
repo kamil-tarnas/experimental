@@ -152,13 +152,17 @@ git_storeShas()
 #for example supported format ISO 8601 2005-04-07T22:13:13
 git_changeDates()
 {
-   #for every commit in the weights or for the number of commits
-   git filter-branch --env-filter \
-      'if [ $GIT_COMMIT = bc82ece256783b864854c3e85cac69f29e6630ee ]
-      then
-         export GIT_AUTHOR_DATE="Fri Jan 2 21:38:53 2009 -0800"
-         export GIT_COMMITTER_DATE="Sat May 19 01:01:01 2007 -0700"
-      fi'
+  #https://stackoverflow.com/questions/43006278/change-git-author-date-git-committer-date-date-of-a-specific-previous-commit-on/43008328#43008328
+  
+  #for every commit in the weights or for the number of commits
+  
+  #https://stackoverflow.com/questions/454734/how-can-one-change-the-timestamp-of-an-old-commit-in-git
+  git filter-branch --env-filter \
+     'if [ $GIT_COMMIT = bc82ece256783b864854c3e85cac69f29e6630ee ]
+     then
+        export GIT_AUTHOR_DATE="Fri Jan 2 21:38:53 2009 -0800"
+        export GIT_COMMITTER_DATE="Sat May 19 01:01:01 2007 -0700"
+     fi'
 }
 
 #need to call it with $1 equal to commit SHA
