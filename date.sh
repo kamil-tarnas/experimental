@@ -176,8 +176,22 @@ calculateDate()
   declare -a dateDecomposed
   dateDecomposed=($date)
   
-  dateDecomposed[3]+=1;
+  #dateDecomposed[3]+=1;
   echo "Decomposed date is: "${dateDecomposed[@]}""
+  
+  declare -a hourDecomposed
+  IFS=":" read -a hourDecomposed <<< ${dateDecomposed[3]}
+  echo "Decomposed hour is       : "${hourDecomposed[@]}""
+  
+  #Calculate the interval to seconds and distribute over the commits...
+  #Calculate the new decomposed hour #TODO: Calculate the exact value...
+  let "hourDecomposed[0]+=1"
+  let "hourDecomposed[1]+=30"
+  let "hourDecomposed[2]+=23"
+  echo "New decomposed hour is   : "${hourDecomposed[@]}""
+  
+  #dateDecomposed
+  #newDate
   
   #add date to the map #TODO: Needs calculations of the new date!!!
   dates[$1]=$date
