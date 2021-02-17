@@ -16,8 +16,8 @@
 #TODO: Parameters ca be passed to function foo() with a call 'foo "$arg"' or 'foo arg'
 
 # API design:
-# MVP version:
-# ./date SHA1 SHA2 18:00-19:00
+# MVP version:     // Two last arguments are - starting hour and the duration (in seconds?)
+# ./date SHA1 SHA2 18:00 360
 # distribute the work over the hours...
 # Need to distribute muliple commits over the hours
 
@@ -79,7 +79,9 @@ help()
 
 #The map for holding SHA and weight pair
 declare -A weights
+#Holding the old dates...
 declare -A dates
+declare -A newDates
 
 declare -A normalizedWeights
 declare -A normalizedHourOffsets
@@ -91,7 +93,14 @@ declare -a shas
 sha1=$1
 sha2=$2
 staring_hour=$3
-ending_hour=$4
+duration_in_seconds=$4
+
+decomposeStartingHour()
+{
+  declare -a startingHourDecomposed
+  IFS=":" read -a startingHourDecomposed <<< $staring_hour
+  echo "Decomposed starting hour is       : "${startingHourDecomposed[@]}""
+}
 
 #checks the number of commits given by SHA range
 git_commitRange()
@@ -187,20 +196,48 @@ calculateDate()
   
   declare -a hourDecomposed
   IFS=":" read -a hourDecomposed <<< ${dateDecomposed[3]}
-  echo "Decomposed hour is       : "${hourDecomposed[@]}""
+  echo "Decomposed hour is         : "${hourDecomposed[@]}""
+  
+  declare -a startingHourDecomposed
+  IFS=":" read -a startingHourDecomposed <<< $staring_hour
+  echo "Decomposed starting hour is: "${startingHourDecomposed[@]}""
+  
+  
+  #TODO: Will overflow in case of calling date.sh with 18:50 or better yet 19:00 - 16 min (max) - 10 (the constant)    
+  let "startingHourDecomposed[1]+=$RANDOM/1000%17+10" #+10 to get double-digit, thats just dumb, but it works...
+  echo "New decomposed starting hour is   : "${startingHourDecomposed[@]}""
+  
+  #For first commit just put the value - for the next ones = calculate the distibution...
   
   #Calculate the interval to seconds and distribute over the commits...
   #Calculate the new decomposed hour #TODO: Calculate the exact value...
-  let "hourDecomposed[0]+=1"
-  let "hourDecomposed[1]+=30"
-  let "hourDecomposed[2]+=23"
+  let "hourDecomposed[0]=startingHourDecomposed[0]"
+  let "hourDecomposed[1]=startingHourDecomposed[1]"
+  #let "hourDecomposed[2]" let the second be for now...
   echo "New decomposed hour is   : "${hourDecomposed[@]}""
+  
+  echo "DATE HERE    :"$date
+  #INVOKE AWK HERE AND SUBSTITUTE THE HOUR...
+  #For some reason the following works:
+  #  var="Sun Feb 14 14:01:04 2021 +0100"
+  #  echo $var | awk '{gsub($4, "15:01:04"); print}' - BEGIN in awk was the problem...
+  newDate=$(echo $date | 
+    awk -v hour="${hourDecomposed[0]}" -v minutes="${hourDecomposed[1]}" -v seconds="${hourDecomposed[2]}" '
+      {gsub($4, hour":"minutes":"seconds); print}')
+    
+  echo "NEW DATE HERE:""$newDate"
   
   #dateDecomposed
   #newDate
   
+  #NEDD TO MAKE CALULATIONS OF duration_in_seconds to distribute the workload...
+  #Duration in seconds /60 and /60 to get the values of minutes and seconds times the share of weight.. 
+  #(100*${weights[$i]}/$accumulatedWeights)*duration_in_seconds | bc -l)%"
+  
   #add date to the map #TODO: Needs calculations of the new date!!!
   dates[$1]=$date
+
+  newDates[$1]=$newDate
 
   #debug
   echo "The [date of the commit is] THE CURRENT DATE IS: ""${dates["$1"]}"
