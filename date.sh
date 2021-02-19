@@ -86,6 +86,8 @@ declare -A newDates
 declare -A normalizedWeights
 declare -A normalizedHourOffsets
 
+declare -i accum
+
 #The array of SHAs in the range of requested commits (first index is the parent of the first commit that is processed)
 declare -a shas
 
@@ -195,11 +197,11 @@ calculateDate()
   echo "Decomposed date is: "${dateDecomposed[@]}""
   
   declare -a hourDecomposed
-  IFS=":" read -a hourDecomposed <<< ${dateDecomposed[3]}
+  IFS=":" read -a hourDecomposed <<< ${dateDecomposed[3]} #here string
   echo "Decomposed hour is         : "${hourDecomposed[@]}""
   
   declare -a startingHourDecomposed
-  IFS=":" read -a startingHourDecomposed <<< $staring_hour
+  IFS=":" read -a startingHourDecomposed <<< $staring_hour #here string
   echo "Decomposed starting hour is: "${startingHourDecomposed[@]}""
   
   
@@ -229,10 +231,17 @@ calculateDate()
   
   #dateDecomposed
   #newDate
-  
   #NEDD TO MAKE CALULATIONS OF duration_in_seconds to distribute the workload...
   #Duration in seconds /60 and /60 to get the values of minutes and seconds times the share of weight.. 
-  #(100*${weights[$i]}/$accumulatedWeights)*duration_in_seconds | bc -l)%"
+  echo "WEIGHTS:     "${weights[$1]}
+  answer=$(bc <<< "100 * ${weights[$1]} / $accumulatedWeights * $duration_in_seconds")
+  if [[ $answer -eq 0 ]]; then
+    let random_factor=$RANDOM/1000+10 #+10 to not get zero again...
+  	answer=$random_factor #42 xD
+  fi
+  #TODO: Logic fo very small numbers - add a random factor...
+  #answer=$(bc <<< "100*$accum")
+  echo $answer
   
   #add date to the map #TODO: Needs calculations of the new date!!!
   dates[$1]=$date
@@ -282,6 +291,7 @@ normalizeWeights()
      echo "The share of weight of $i commit in total weight is $(echo "scale=2; 
           (100*${weights[$i]}/$accumulatedWeights)" | bc -l)%"
    done
+   accum=$accumulatedWeights
 
 }
 
@@ -301,6 +311,8 @@ do
   git_checkLines "${shas[$i]}" "${shas[$i-1]}" 
 done
 
+normalizeWeights
+
 for i in "${!shas[@]}"
 do 
   if [[ $i == 0 ]]; then
@@ -312,6 +324,6 @@ done
 
 #Extracts the hour currently
 modifyDate "$date"
-normalizeWeights
+#normalizeWeights
 
 #git_changeDates
