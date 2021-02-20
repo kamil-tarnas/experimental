@@ -193,7 +193,22 @@ git_changeDates()
 # Calling with $1 being SHA of commit
 getCommitDate()
 {
-  echo "Call getCommitDate()"
+  # For the problem of having all the, so called "return value" return
+  # all of the content the command (function) produces to stdout
+  # https://superuser.com/questions/1320691/print-echo-and-return-value-in-bash-function
+  
+  printf "Call getCommitDate()" >&2 # Need to print somewhere else than the stdout
+  
+  declare -r sha=$1; shift # Shift to disallow the usage of input arguments
+  
+  dateLinePosition=3 # Parameter to change if 'git show HEAD' output would change...
+  
+  commitDate=$(git --no-pager show $sha |
+                 sed "${dateLinePosition}q;d" |
+                   awk '{first = $1; $1 = ""; print $0 }' |
+                     sed "s/^ //g")
+                     
+  echo $commitDate # "Return" the value 
 }
 
 #need to call it with $1 equal to commit SHA
@@ -218,7 +233,9 @@ calculateDate() #getting the current date not the date of the commit...
         sed "s/^ //g")
   echo "HEEEEEEEEERE"
   echo $commitDate
-
+  
+  #func_result="$(my_function)"
+  commitDate="$(getCommitDate "$1")"
 
   
   declare -a dateDecomposed
