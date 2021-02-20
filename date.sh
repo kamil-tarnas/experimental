@@ -85,7 +85,7 @@ help()
 
 main()
 {
-  # Put the arguments (all the arrays and so on) in here
+  # Put the arguments (all the arrays and so on) in here - call it with main "$@"
   echo "Main function called..."
 }
 
@@ -201,6 +201,19 @@ calculateDate() #getting the current date not the date of the commit...
   
   #Sun Feb 14 14:01:04 2021 +0100 as in git log (?)
   echo $date
+  #date is the current date - do we need that
+  #TODO: Could be interpreted as THIS hour + the timeshift
+
+  dateLinePosition=3 # Parameter to change if 'git show HEAD' output would change...
+  #commitDate=$(git show $1 | sed -i "${dateLinePosition}q;d")
+  commitDate=$(git --no-pager show $1 |
+    sed "${dateLinePosition}q;d" |
+      awk '{first = $1; $1 = ""; print $0 }' |
+        sed "s/^ //g")
+  echo "HEEEEEEEEERE"
+  echo $commitDate
+
+
   
   declare -a dateDecomposed
   dateDecomposed=($date)
@@ -331,6 +344,8 @@ done
 
 normalizeWeights
 
+# Here we calculate will modify the dates of commits...
+# TODO: Instead of iterating over all SHAs and skipping the first one write an expression to start from the second one...
 for i in "${!shas[@]}"
 do 
   if [[ $i == 0 ]]; then
