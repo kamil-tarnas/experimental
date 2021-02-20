@@ -190,6 +190,12 @@ git_changeDates()
      fi'
 }
 
+# Calling with $1 being SHA of commit
+getCommitDate()
+{
+  echo "Call getCommitDate()"
+}
+
 #need to call it with $1 equal to commit SHA
 calculateDate() #getting the current date not the date of the commit...
 {
@@ -197,10 +203,10 @@ calculateDate() #getting the current date not the date of the commit...
   
   #Calculate the current date
   time_localization=" +0100"
-  date=$(LC_TIME=en_US date | sed -e 's/CET //')$time_localization
+  currentDate=$(LC_TIME=en_US date | sed -e 's/CET //')$time_localization
   
   #Sun Feb 14 14:01:04 2021 +0100 as in git log (?)
-  echo $date
+  echo $currentDate
   #date is the current date - do we need that
   #TODO: Could be interpreted as THIS hour + the timeshift
 
@@ -216,7 +222,7 @@ calculateDate() #getting the current date not the date of the commit...
 
   
   declare -a dateDecomposed
-  dateDecomposed=($date)
+  dateDecomposed=($commitDate)
   
   #dateDecomposed[3]+=1;
   echo "Decomposed date is: "${dateDecomposed[@]}""
@@ -243,17 +249,18 @@ calculateDate() #getting the current date not the date of the commit...
   #let "hourDecomposed[2]" let the second be for now...
   echo "New decomposed hour is   : "${hourDecomposed[@]}""
   
-  echo "DATE HERE    :"$date
+  echo "DATE HERE    :"$commitDate
   #INVOKE AWK HERE AND SUBSTITUTE THE HOUR...
   #For some reason the following works:
   #  var="Sun Feb 14 14:01:04 2021 +0100"
   #  echo $var | awk '{gsub($4, "15:01:04"); print}' - BEGIN in awk was the problem...
-  newDate=$(echo $date | 	
+  newDate=$(echo $commitDate | 	
     awk -v hour="${hourDecomposed[0]}" -v minutes="${hourDecomposed[1]}" -v seconds="${hourDecomposed[2]}" '
       {gsub($4, hour":"minutes":"seconds); print}')
     
   echo "NEW DATE HERE:""$newDate"
   
+  #Need to add the date incrementally...
   #dateDecomposed
   #newDate
   #NEDD TO MAKE CALULATIONS OF duration_in_seconds to distribute the workload...
@@ -269,7 +276,7 @@ calculateDate() #getting the current date not the date of the commit...
   echo $answer
   
   #add date to the map #TODO: Needs calculations of the new date!!!
-  dates[$1]=$date
+  dates[$1]=$commitDate
 
   newDates[$1]=$newDate
 
