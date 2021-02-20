@@ -77,6 +77,18 @@ help()
 #   exit
 #fi
 
+
+#check the arguments first - if don't match then
+# call something like evaluate_input_parameters...
+# print help if they don't match
+# if okay, then go to main
+
+main()
+{
+  # Put the arguments (all the arrays and so on) in here
+  echo "Main function called..."
+}
+
 #The map for holding SHA and weight pair
 declare -A weights
 #Holding the old dates...
@@ -92,15 +104,15 @@ declare -i accum
 declare -a shas
 
 #Reading parameters
-sha1=$1
-sha2=$2
-staring_hour=$3
-duration_in_seconds=$4
+declare -r sha1=$1
+declare -r sha2=$2
+declare -r staring_hour=$3
+declare -r duration_in_seconds=$4
 
 decomposeStartingHour()
 {
   declare -a startingHourDecomposed
-  IFS=":" read -a startingHourDecomposed <<< $staring_hour
+  IFS=":" read -a startingHourDecomposed <<< $staring_hour	
   echo "Decomposed starting hour is       : "${startingHourDecomposed[@]}""
 }
 
@@ -179,7 +191,7 @@ git_changeDates()
 }
 
 #need to call it with $1 equal to commit SHA
-calculateDate()
+calculateDate() #getting the current date not the date of the commit...
 {
   echo "Calulating date..."
   
@@ -223,7 +235,7 @@ calculateDate()
   #For some reason the following works:
   #  var="Sun Feb 14 14:01:04 2021 +0100"
   #  echo $var | awk '{gsub($4, "15:01:04"); print}' - BEGIN in awk was the problem...
-  newDate=$(echo $date | 
+  newDate=$(echo $date | 	
     awk -v hour="${hourDecomposed[0]}" -v minutes="${hourDecomposed[1]}" -v seconds="${hourDecomposed[2]}" '
       {gsub($4, hour":"minutes":"seconds); print}')
     
@@ -270,7 +282,7 @@ modifyHour()
 }
 
 #passed is the timeframe offset set by the user
-normalizeWeights()
+normalizeWeights() # or make it a normalize weight for one commit?
 {  
    echo "jou"
    #search for the highest and the lowest and spread it across the given time-window
@@ -288,11 +300,17 @@ normalizeWeights()
    #Print the share of every commit in the total workload #TODO: Add it into the -A map of normalized weights?
    for i in "${!weights[@]}"
    do
+     local normalizedWeight=$(bc <<< "scale=2; 100*${weights[$i]}/$accumulatedWeights")
      echo "The share of weight of $i commit in total weight is $(echo "scale=2; 
           (100*${weights[$i]}/$accumulatedWeights)" | bc -l)%"
+     echo "The share of weight of $i commit in total weight is" $normalizedWeight"%"
+     
+     # Put the results into normalizedWeights map
+     normalizedWeights[$i]=$normalizedWeight
+     echo ${normalizedWeights[$i]}
    done
    accum=$accumulatedWeights
-
+   
 }
 
 #Check the range of commits to be processed
