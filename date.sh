@@ -190,9 +190,18 @@ git_changeDates()
      fi'
 }
 
+
+functionCallPreamble()
+{
+  echo "Calling" ${FUNCNAME[1]}"()" "from" ${FUNCNAME[2]}"()" "contained in script" $0 >&2
+}
+
+
+# TODO: Have a global option of redirect the logging output somewhere...
 # Calling with $1 being SHA of commit
 getCommitDate()
 {
+  functionCallPreamble
   # For the problem of having all the, so called "return value" return
   # all of the content the command (function) produces to stdout
   # https://superuser.com/questions/1320691/print-echo-and-return-value-in-bash-function
@@ -211,33 +220,33 @@ getCommitDate()
   echo $commitDate # "Return" the value 
 }
 
+
+getCurrentDate()
+{
+  functionCallPreamble
+  printf "Call getCurrentDate()" >&2
+  
+  # TODO: Could be interpreted as THIS hour + the timeshift
+  # Calculate the current date for git format UTC
+  time_localization=" +0100" # CET is +1 hour in comparison to UTC base
+  currentDate=$(LC_TIME=en_US date | sed -e 's/CET //')$time_localization
+  
+  # Example:
+  # "Sun Feb 14 14:01:04 2021 +0100"
+  echo $currentDate
+}
+
+
 #need to call it with $1 equal to commit SHA
 calculateDate() #getting the current date not the date of the commit...
 {
-  echo "Calulating date..."
-  
-  #Calculate the current date
-  time_localization=" +0100"
-  currentDate=$(LC_TIME=en_US date | sed -e 's/CET //')$time_localization
-  
-  #Sun Feb 14 14:01:04 2021 +0100 as in git log (?)
+  # currentDate is the current date - do we need that
+  currentDate="$(getCurrentDate)"
   echo $currentDate
-  #date is the current date - do we need that
-  #TODO: Could be interpreted as THIS hour + the timeshift
-
-  dateLinePosition=3 # Parameter to change if 'git show HEAD' output would change...
-  #commitDate=$(git show $1 | sed -i "${dateLinePosition}q;d")
-  commitDate=$(git --no-pager show $1 |
-    sed "${dateLinePosition}q;d" |
-      awk '{first = $1; $1 = ""; print $0 }' |
-        sed "s/^ //g")
-  echo "HEEEEEEEEERE"
-  echo $commitDate
   
   #func_result="$(my_function)"
   commitDate="$(getCommitDate "$1")"
 
-  
   declare -a dateDecomposed
   dateDecomposed=($commitDate)
   
