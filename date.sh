@@ -196,9 +196,21 @@ functionCallPreamble()
   echo "Calling" ${FUNCNAME[1]}"()" "from" ${FUNCNAME[2]}"()" "contained in script" $0 >&2
 }
 
+# TODO: Local echo for debugging... - more like command substitution for debug 
+# print the function like bar()->foo(): "and the echo here...
+trace_echo()
+{
+  numOfFunctionsOnStack=${#FUNCNAME[*]}
+  echo $numOfFunctionsOnStack >&2 # Need to print somewhere else than the stdout
+  for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
+    echo -n ${FUNCNAME[$i]}"()->" >&2 
+  done
+  echo $@ >&2
+}
+
 
 # TODO: Have a global option of redirect the logging output somewhere...
-# Calling with $1 being SHA of commit
+# Params: $1 being SHA of commit
 getCommitDate()
 {
   functionCallPreamble
@@ -206,9 +218,10 @@ getCommitDate()
   # all of the content the command (function) produces to stdout
   # https://superuser.com/questions/1320691/print-echo-and-return-value-in-bash-function
   
-  printf "Call getCommitDate()" >&2 # Need to print somewhere else than the stdout
+  trace_echo "Call getCommitDate()" >&2 
   
-  declare -r sha=$1; shift # Shift to disallow the usage of input arguments
+  # Shift to disallow the usage of input arguments
+  declare -r sha=$1; shift
   
   dateLinePosition=3 # Parameter to change if 'git show HEAD' output would change...
   
@@ -236,6 +249,49 @@ getCurrentDate()
   echo $currentDate
 }
 
+# TODO: Pass an array to function - how to refer to the arguments then in a function?
+# Params: $1 the date in getCurrentDate() or getCommitDate() returning format
+getHourFromDate()
+{
+  functionCallPreamble
+  declare -a dateDecomposed
+  
+  # Decompose the columns (parts) of the date and assign as entries of an array
+  dateDecomposed=($commitDate)
+  hourPosition=3
+  
+  trace_echo "Decomposed date is: "${dateDecomposed[@]}""
+  
+  echo ${dateDecomposed[$hourPosition]]}
+}
+
+
+# TODO: The old hour is not even needed...
+# Params: $1 starting hour (the base hour from CLI params), $2 share in percents, $3 seconds to distribute
+# TODO: In current case it would be 
+calculateNewHour()
+{
+  functionCallPreamble
+  # Shift to disallow the usage of input argument
+  declare -r startingHour=$1; shift s
+  declare -r share=$1; shift
+  declare -r secondsToDistribute=$1; shift
+  
+  # Decompose the hour to get an array of hours, minutes and seconds
+  declare -a hourDecomposed
+  IFS=":" read -a hourDecomposed <<< $startingHour
+  
+  trace_echo "Decomposed hour is: "${hourDecomposed[@]}""
+  
+  # TODO: Just calculate all of that and modify the date accordingly... [[left]]
+  #hours=
+  #minutes=
+  #seconds=
+  
+  #TODO: Will overflow in case of calling date.sh with 18:50 or better yet 19:00 - 16 min (max) - 10 (the constant)    
+  let "startingHourDecomposed[1]+=$RANDOM/1000%17+10" #+10 to get double-digit, thats just dumb, but it works...
+  echo "New decomposed starting hour is   : "${startingHourDecomposed[@]}""
+}
 
 #need to call it with $1 equal to commit SHA
 calculateDate() #getting the current date not the date of the commit...
@@ -244,15 +300,28 @@ calculateDate() #getting the current date not the date of the commit...
   currentDate="$(getCurrentDate)"
   echo $currentDate
   
-  #func_result="$(my_function)"
+  # Get the date of the commit
   commitDate="$(getCommitDate "$1")"
 
+  # Get the hour from the commit date
+  commitHour="$(getHourFromDate "$commitDate")"
+  
+  echo "COMMMMMMMMMI HOUR" $commitHour
+  
+  
+  
+  
+  
+  
   declare -a dateDecomposed
+  
+  # Decompose the columns (parts) of the date and assign as entries of an array
   dateDecomposed=($commitDate)
   
   #dateDecomposed[3]+=1;
   echo "Decomposed date is: "${dateDecomposed[@]}""
   
+  # Just assign three variables from this array...
   declare -a hourDecomposed
   IFS=":" read -a hourDecomposed <<< ${dateDecomposed[3]} #here string
   echo "Decomposed hour is         : "${hourDecomposed[@]}""
@@ -260,6 +329,8 @@ calculateDate() #getting the current date not the date of the commit...
   declare -a startingHourDecomposed
   IFS=":" read -a startingHourDecomposed <<< $staring_hour #here string
   echo "Decomposed starting hour is: "${startingHourDecomposed[@]}""
+  
+  
   
   
   #TODO: Will overflow in case of calling date.sh with 18:50 or better yet 19:00 - 16 min (max) - 10 (the constant)    
