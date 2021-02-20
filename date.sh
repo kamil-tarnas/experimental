@@ -119,23 +119,33 @@ decomposeStartingHour()
 #checks the number of commits given by SHA range
 git_commitRange()
 {
-   number_of_commits=$(git log --oneline $2...$1 | wc -l)
+  functionCallPreamble
+  # Shift to disallow the usage of input argument
+  declare -r sha=$1; shift
+  declare -r parentSha=$1; shift
+  
+  number_of_commits=$(git log --oneline $parentSha...$sha | wc -l)
 
-   #debug
-   echo "Number of commits is: "$number_of_commits
-   echo $number_of_commits
+  #debug
+  echo "Number of commits is: "$number_of_commits
+  echo $number_of_commits
 }
 
 #checks the number of lines added in between commits given by SHA arguments, third argument is a 
 git_checkLines()
 {
-  echo "Checking lines..."
-  number_of_deleted_lines=$(git diff $2...$1 | grep "^\-[^-].*" | wc -l)
-  number_of_added_lines=$(git diff $2...$1 | grep "^\+[^+].*" | wc -l)
+  functionCallPreamble
+  # Shift to disallow the usage of input argument
+  declare -r sha=$1; shift
+  declare -r parentSha=$1; shift
+  
+  trace_echo "Checking lines..."
+  number_of_deleted_lines=$(git diff $parentSha...$sha | grep "^\-[^-].*" | wc -l)
+  number_of_added_lines=$(git diff $parentSha...$sha | grep "^\+[^+].*" | wc -l)
 
   #debug
-  echo "Number of deleted lines is: "$number_of_deleted_lines
-  echo "Number of added lines is: "$number_of_added_lines
+  trace_echo "Number of deleted lines is: "$number_of_deleted_lines
+  trace_echo "Number of added lines is: "$number_of_added_lines
   
   #generate a random integer of interval [0, 32] #TODO: Random factor should probably be added later
   let random_factor=$RANDOM/1000
@@ -144,23 +154,28 @@ git_checkLines()
   let weight=20*number_of_deleted_lines+80*number_of_added_lines+$random_factor
 
   #add weight to the map
-  weights[$1]=$weight
+  weights[$sha]=$weight
 
   #debug
   echo "Weight of the commit $1 is: ""${weights["$1"]}" #does it need to be in parentheses?
-  #echo "${weights[dd71784357ead796e11f3e8581db4d629ab9cfe4]}"
 }
+
 
 #input parameters should be a range of commits
 git_storeShas()
 {
-  echo "Storing SHAs..."
+  functionCallPreamble
+  # Shift to disallow the usage of input argument
+  declare -r sha=$1; shift
+  declare -r parentSha=$1; shift
+  
+  trace_echo "Storing SHAs..."
   
   #Get the parent of the first commit to be processed
-  parent=$(git log --oneline $2~1...$2 | awk '{print $1}')
+  parent=$(git log --oneline $parentSha~1...$parentSha | awk '{print $1}')
   
   #Read the SHAs to the array in reverse order, so the last element in the array is the commit on the top
-  commits=($(git log --reverse --oneline $2...$1 | awk '{print $1}'))
+  commits=($(git log --reverse --oneline $parentSha...$sha | awk '{print $1}'))
   
   #Merge the parent and commits to be processed into one array
   shas=("$parent" "${commits[@]}")
@@ -237,7 +252,7 @@ getCommitDate()
 getCurrentDate()
 {
   functionCallPreamble
-  printf "Call getCurrentDate()" >&2
+  trace_echo "Call getCurrentDate()" >&2
   
   # TODO: Could be interpreted as THIS hour + the timeshift
   # Calculate the current date for git format UTC
@@ -273,7 +288,7 @@ calculateNewHour()
 {
   functionCallPreamble
   # Shift to disallow the usage of input argument
-  declare -r startingHour=$1; shift s
+  declare -r startingHour=$1; shift
   declare -r share=$1; shift
   declare -r secondsToDistribute=$1; shift
   
