@@ -397,7 +397,7 @@ calculateDate() #getting the current date not the date of the commit...
 }
 
 #pass date as $1
-modifyDate()
+modifyDate()###############
 {
   #$ date -u -d @360 +'%-Mm %-Ss'
   #6m 0s
