@@ -303,7 +303,12 @@ calculateNewHour()
   # $share / 100 to get unitary value instead of percents
   leftSecondsToDistribute=$(bc <<< "$secondsToDistribute * $share / 100")
   
-  # TODO: If the leftSecondsToDistribute are less than zero, then add some artificial value from rand()
+  # If the leftSecondsToDistribute are equal to zero
+  # then use some artificial value from $RANDOM over [1-42]
+  if [ $leftSecondsToDistribute -eq 0 ]; then
+    leftSecondsToDistribute=$(bc <<< "$RANDOM % 42 + 1")
+    exit
+  fi 
   
   trace_echo "Starting seconds to distribute is" $leftSecondsToDistribute
   
