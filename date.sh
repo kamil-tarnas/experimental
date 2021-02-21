@@ -234,7 +234,7 @@ getCommitDate()
   # all of the content the command (function) produces to stdout
   # https://superuser.com/questions/1320691/print-echo-and-return-value-in-bash-function
   
-  trace_echo "Call getCommitDate()" >&2 
+  trace_echo "Call getCommitDate()"
   
   # Shift to disallow the usage of input arguments
   declare -r sha=$1; shift
@@ -245,6 +245,7 @@ getCommitDate()
                  sed "${dateLinePosition}q;d" |
                    awk '{first = $1; $1 = ""; print $0 }' |
                      sed "s/^ //g")
+  trace_echo "The commit $sha date is:" $commitDate
                      
   echo $commitDate # "Return" the value 
 }
@@ -333,8 +334,15 @@ calculateNewHour()
     trace_echo "Arithmetic error, $leftSecondsToDistribute seconds that are left for distrubution!"
     exit
   fi 
+  
+  # Now, we have the values of hour, minutes and seconds - add them to the startingHour
+  let "hourDecomposed[0] += hours"
+  let "hourDecomposed[1] += minutes"
+  let "hourDecomposed[1] += seconds"
+  
+  trace_echo "New decomposed hour is: "${hourDecomposed[@]}""
 
-  echo "The return value"
+  echo "${hourDecomposed[@]}"
 }
 
 
@@ -353,9 +361,9 @@ calculateDate() #getting the current date not the date of the commit...
   
   # Calculate the share in percent of current commit
   local shareInPercent=$(bc <<< "scale=2; 100 * ${weights[$1]} / $accumulatedWeights")
-  #let "shareInPercent = 50"
-  echo "SHAAAAAAAAARE IN PERRRRRCEEENT"$shareInPercent
-  testingNewCommitHour="$(calculateNewHour "$staring_hour" "$shareInPercent" "$duration_in_seconds")"
+
+  declare -a testingNewCommitHour=("$(calculateNewHour "$commitHour" "$shareInPercent" "$duration_in_seconds")")
+  echo "TESTING"${testingNewCommitHour[@]}
   
   declare -a dateDecomposed
   
