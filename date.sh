@@ -301,7 +301,7 @@ calculateNewHour()
   trace_echo "Decomposed hour is: "${hourDecomposed[@]}""
   
   # $share / 100 to get unitary value instead of percents
-  leftSecondsToDistribute=$(bc <<< "$secondsToDistribute * $share / 100")
+  local leftSecondsToDistribute=$(bc <<< "$secondsToDistribute * $share / 100")
   
   # If the leftSecondsToDistribute are equal to zero
   # then use some artificial value from $RANDOM over [1-42]
