@@ -1,4 +1,5 @@
 #!/bin/bash
+# assert.sh
 #take the number of commits as parameter or take base SHA as a parameter
 #generate random seeds and time offsets from the specified or current data - git diff and wc -l to see how big should be the offsets? - different offsets for added in comparison to deleted lines? weights assigning mechanism?
 #normalize the weight over some hours
@@ -319,6 +320,9 @@ calculateNewHour()
   let "leftSecondsToDistribute -= seconds"
   trace_echo "Seconds:" $seconds
   trace_echo "Left seconds:" $leftSecondsToDistribute
+  
+  # Assert that all the second have been distributed and no negative value result
+  assert "$leftSecondsToDistribute" 0
   
   #Assert the seconds are equal to zero here!!!
   
