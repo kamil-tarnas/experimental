@@ -127,8 +127,8 @@ git_commitRange()
   number_of_commits=$(git log --oneline $parentSha...$sha | wc -l)
 
   #debug
-  echo "Number of commits is: "$number_of_commits
-  echo $number_of_commits
+  trace_echo "Number of commits is: "$number_of_commits
+  trace_echo $number_of_commits
 }
 
 #checks the number of lines added in between commits given by SHA arguments, third argument is a 
@@ -157,7 +157,7 @@ git_checkLines()
   weights[$sha]=$weight
 
   #debug
-  echo "Weight of the commit $1 is: ""${weights["$1"]}" #does it need to be in parentheses?
+  trace_echo "Weight of the commit $1 is: ""${weights["$1"]}" #does it need to be in parentheses?
 }
 
 
@@ -183,7 +183,7 @@ git_storeShas()
   #Get the parent of the first commit and push it into the begining of the array
   #git log --oneline ae0bd2f096ab2d14f5bf982dd7433fc57c7ee081~1..ae0bd2f096ab2d14f5bf982dd7433fc57c7ee081
   
-  echo "The processed commits are: "${shas[@]}" (first ${shas[0]} is a parent of all the changes, ${shas[-1]} is the latest, top commit)"
+  trace_echo "The processed commits are: "${shas[@]}" (first ${shas[0]} is a parent of all the changes, ${shas[-1]} is the latest, top commit)"
 }
 
 
@@ -283,7 +283,8 @@ getHourFromDate()
 
 # TODO: The old hour is not even needed...
 # Params: $1 starting hour (the base hour from CLI params), $2 share in percents, $3 seconds to distribute
-# TODO: In current case it would be 
+# TODO: In current case it would be - TODO: We do not know whoch commit in the order it is - needs a base hour!
+# TODO: $startingHour would be the last hour!!!! OF the bottom, parent commit
 calculateNewHour()
 {
   functionCallPreamble
@@ -298,13 +299,31 @@ calculateNewHour()
   
   trace_echo "Decomposed hour is: "${hourDecomposed[@]}""
   
-  # TODO: Just calculate all of that and modify the date accordingly... [[left]]
-  #hours=
-  #minutes=
-  #seconds=
+  # $share / 100 to get unitary value instead of percents
+  leftSecondsToDistribute=$(bc <<< "$secondsToDistribute * $share / 100")
+  
+  trace_echo "Starting seconds to distribute is" $leftSecondsToDistribute
+  
+  hours=$(bc <<< "$leftSecondsToDistribute / 3600")
+  let "leftSecondsToDistribute -= hours * 3600"
+  trace_echo "Hours:" $hours
+  trace_echo "Left seconds:" $leftSecondsToDistribute
+
+  minutes=$(bc <<< "$leftSecondsToDistribute / 60")
+  let "leftSecondsToDistribute -= minutes * 60"
+  trace_echo "Minutes:" $minutes
+  trace_echo "Left seconds:" $leftSecondsToDistribute
+
+    
+  seconds=$(bc <<< "$leftSecondsToDistribute")
+  let "leftSecondsToDistribute -= seconds"
+  trace_echo "Seconds:" $seconds
+  trace_echo "Left seconds:" $leftSecondsToDistribute
+  
+  #Assert the seconds are equal to zero here!!!
   
   #TODO: Will overflow in case of calling date.sh with 18:50 or better yet 19:00 - 16 min (max) - 10 (the constant)    
-  let "startingHourDecomposed[1]+=$RANDOM/1000%17+10" #+10 to get double-digit, thats just dumb, but it works...
+  #let "startingHourDecomposed[1]+=$RANDOM/1000%17+10" #+10 to get double-digit, thats just dumb, but it works...
   echo "New decomposed starting hour is   : "${startingHourDecomposed[@]}""
 }
 
@@ -321,12 +340,11 @@ calculateDate() #getting the current date not the date of the commit...
   # Get the hour from the commit date
   commitHour="$(getHourFromDate "$commitDate")"
   
-  echo "COMMMMMMMMMI HOUR" $commitHour
-  
-  
-  
-  
-  
+  # Calculate the share in percent of current commit
+  local shareInPercent=$(bc <<< "scale=2; 100 * ${weights[$1]} / $accumulatedWeights")
+  #let "shareInPercent = 50"
+  echo "SHAAAAAAAAARE IN PERRRRRCEEENT"$shareInPercent
+  testingNewCommitHour="$(calculateNewHour "$staring_hour" "$shareInPercent" "$duration_in_seconds")"
   
   declare -a dateDecomposed
   
