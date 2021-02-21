@@ -306,7 +306,7 @@ calculateNewHour()
   
   # If the leftSecondsToDistribute are equal to zero
   # then use some artificial value from $RANDOM over [1-42]
-  if [ $leftSecondsToDistribute -eq 0 ]; then
+  if [[ $leftSecondsToDistribute -eq 0 ]]; then
     leftSecondsToDistribute=$(bc <<< "$RANDOM % 42 + 1")
     exit
   fi 
@@ -336,13 +336,42 @@ calculateNewHour()
   fi 
   
   # Now, we have the values of hour, minutes and seconds - add them to the startingHour
-  let "hourDecomposed[0] += hours"
-  let "hourDecomposed[1] += minutes"
-  let "hourDecomposed[1] += seconds"
-  
-  trace_echo "New decomposed hour is: "${hourDecomposed[@]}""
+  # If any of those overflow - then upgrade the "higher" counter...
+  let "hourDecomposed[2] += seconds"
+  if [[ ${hourDecomposed[2]} -ge 60 ]]; then
+  # Increment the higher level counter (minutes) and subtract 60
+    let "hourDecomposed[1] += 1"
+    let "hourDecomposed[2] -= 60"
+  fi
 
-  echo "${hourDecomposed[@]}"
+  
+  let "hourDecomposed[1] += minutes"
+  if [[ ${hourDecomposed[1]} -ge 60 ]]; then
+    # Increment the higher level counter (hours) and subtract 60
+      let "hourDecomposed[0] += 1"
+      let "hourDecomposed[1] -= 60"
+  fi
+
+  let "hourDecomposed[0] += hours"
+  if [[ ${hourDecomposed[0]} -ge 24 ]]; then
+    trace_echo "Overflow on hours, should be next day!"
+    exit
+  fi
+  
+  trace_echo "zkamtar New decomposed hour is: "${hourDecomposed[@]}""
+  
+  
+  # TODO: [[left]] Need to add zero in case of hours or minues would be on-digit... 
+  # for loop with iterator is probably needed, because there is a need to refer to
+  # the hourDecomposed map element...
+  for counter in "${hourDecomposed[@]}"; do 
+    if [[ ${#counter} -lt 2 ]]; then # [[ "$i" == '0' ]] less efficient because needs expanding the variable?
+      counter="0$counter"
+      echo "NEEW CORRECTED" $counter
+    fi
+  done
+
+  echo "${hourDecomposed[@]}" #Tested and it is always (on one case of CLI) okay...
 }
 
 
