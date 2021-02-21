@@ -215,7 +215,7 @@ functionCallPreamble()
 # print the function like bar()->foo(): "and the echo here...
 trace_echo()
 {
-  numOfFunctionsOnStack=${#FUNCNAME[*]}
+  local numOfFunctionsOnStack=${#FUNCNAME[*]}
   echo $numOfFunctionsOnStack >&2 # Need to print somewhere else than the stdout
   for (( i=$(($numOfFunctionsOnStack-1)); (( $i > 0 )) ; i-- )); do
     echo -n ${FUNCNAME[$i]}"()->" >&2 
