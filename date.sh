@@ -303,6 +303,8 @@ calculateNewHour()
   # $share / 100 to get unitary value instead of percents
   leftSecondsToDistribute=$(bc <<< "$secondsToDistribute * $share / 100")
   
+  # TODO: If the leftSecondsToDistribute are less than zero, then add some artificial value from rand()
+  
   trace_echo "Starting seconds to distribute is" $leftSecondsToDistribute
   
   hours=$(bc <<< "$leftSecondsToDistribute / 3600")
@@ -322,14 +324,14 @@ calculateNewHour()
   trace_echo "Left seconds:" $leftSecondsToDistribute
   
   # Assert that all the second have been distributed and no negative value result
-  assert "$leftSecondsToDistribute" 0
-  
-  #Assert the seconds are equal to zero here!!!
-  
-  #TODO: Will overflow in case of calling date.sh with 18:50 or better yet 19:00 - 16 min (max) - 10 (the constant)    
-  #let "startingHourDecomposed[1]+=$RANDOM/1000%17+10" #+10 to get double-digit, thats just dumb, but it works...
-  echo "New decomposed starting hour is   : "${startingHourDecomposed[@]}""
+  if [ $leftSecondsToDistribute -ne 0 ]; then
+    trace_echo "Arithmetic error, $leftSecondsToDistribute seconds that are left for distrubution!"
+    exit
+  fi 
+
+  echo "The return value"
 }
+
 
 #need to call it with $1 equal to commit SHA
 calculateDate() #getting the current date not the date of the commit...
