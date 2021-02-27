@@ -563,8 +563,18 @@ do
   calculateDate "${shas[$i]}"
 done
 
+for i in "${!shas[@]}"
+do 
+  if [[ $i == 0 ]]; then
+    continue
+  fi
+  echo "Calling calculateDate with: ""${shas[$i]}"
+  git_changeDates "${shas[$i]}"
+done
+
+
 #Extracts the hour currently
-modifyDate "$date" # Modify date for every commit passed to the script...
+#modifyDate "$date" # Modify date for every commit passed to the script...
 #normalizeWeights
 
 #git_changeDates
