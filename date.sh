@@ -207,17 +207,19 @@ git_changeDates()
   declare -r sha=$1; shift
   
   #https://stackoverflow.com/questions/43006278/change-git-author-date-git-committer-date-date-of-a-specific-previous-commit-on/43008328#43008328
-  
+  #https://linux.die.net/man/1/git-filter-branch
   #for every commit in the weights or for the number of commits
   
   #https://stackoverflow.com/questions/454734/how-can-one-change-the-timestamp-of-an-old-commit-in-git
   
+  # To expand the variables, see:
+  # https://stackoverflow.com/questions/57469553/running-git-filter-branch-from-bash-shell
   #NOTE: This works and changes the commit!
   git filter-branch -f --env-filter \
-     'if [ $GIT_COMMIT = $sha ]
+     'if [ $GIT_COMMIT = '"$(echo $sha)"' ]
      then
-        export GIT_AUTHOR_DATE="${newDates[$sha]}"
-        export GIT_COMMITTER_DATE="${newDates[$sha]}"
+        export GIT_AUTHOR_DATE="'"${newDates[$sha]}"'"
+        export GIT_COMMITTER_DATE="'"${newDates[$sha]}"'"
      fi'
 }
 
