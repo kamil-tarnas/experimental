@@ -213,7 +213,7 @@ git_changeDates()
   #https://stackoverflow.com/questions/454734/how-can-one-change-the-timestamp-of-an-old-commit-in-git
   
   #NOTE: This works and changes the commit!
-  git filter-branch --env-filter \
+  git filter-branch --env-filter --force \
      'if [ $GIT_COMMIT = $sha ]
      then
         export GIT_AUTHOR_DATE="${newDates[$sha]}"
