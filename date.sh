@@ -565,13 +565,11 @@ do
   calculateDate "${shas[$i]}"
 done
 
-for i in "${!shas[@]}"
-do 
-  if [[ $i == 0 ]]; then
-    continue
-  fi
-  echo "Calling calculateDate with: ""${shas[$i]}"
-  git_changeDates "${shas[$i]}"
+numOfShas=${#shas[*]}
+echo $numOfShas >&2 # Need to print somewhere else than the stdout
+for (( shaNumber=$(($numOfShas-1)); (( $shaNumber > 0 )) ; shaNumber-- )); do
+  echo "Calling git_changeDates with: ""${shas[$shaNumber]}"
+  git_changeDates "${shas[$shaNumber]}"
 done
 
 
