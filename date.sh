@@ -180,10 +180,10 @@ git_storeShas()
   trace_echo "Storing SHAs..."
   
   #Get the parent of the first commit to be processed
-  parent=$(git log --oneline $parentSha~1...$parentSha | awk '{print $1}')
+  parent=$(git log --pretty=tformat:"%H" --shortstat $parentSha~1...$parentSha | sed 'N;N;y/\n/ /' | awk '{print $1}')
   
   #Read the SHAs to the array in reverse order, so the last element in the array is the commit on the top
-  commits=($(git log --reverse --oneline $parentSha...$sha | awk '{print $1}'))
+  commits=($(git log --reverse --pretty=tformat:"%H" --shortstat $parentSha...$sha | sed 'N;N;y/\n/ /' | awk '{print $1}'))
   
   #Merge the parent and commits to be processed into one array
   shas=("$parent" "${commits[@]}")
