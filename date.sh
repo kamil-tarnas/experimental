@@ -26,6 +26,11 @@
 # ./date.sh 1e17200de52e03f47f99bfe8e358f102ad593eba dab17a71eef29c6091d660c80eb03ef0a510db3f
 # ./date.sh e9888fe52a7056abae4eb30c862fc04893f03a38 ae0bd2f096ab2d14f5bf982dd7433fc57c7ee081
 
+# More recent use cases:
+# ./date.sh 1e17200de52e03f47f99bfe8e358f102ad593eba dab17a71eef29c6091d660c80eb03ef0a510db3f 20:00 3600
+# ./date.sh 1e17200de52e03f47f99bfe8e358f102ad593eba dab17a71eef29c6091d660c80eb03ef0a510db3f 20:00 3600 2>/dev/null
+
+
 : '
 
 kamil@kamil-TP300LA:~/experimental$ ./date.sh 1e17200de52e03f47f99bfe8e358f102ad593eba dab17a71eef29c6091d660c80eb03ef0a510db3f
@@ -94,6 +99,8 @@ main()
 declare -A weights
 #Holding the old dates...
 declare -A dates
+
+# Holding new dates...
 declare -A newDates
 
 declare -A normalizedWeights
@@ -189,8 +196,16 @@ git_storeShas()
 
 
 #for example supported format ISO 8601 2005-04-07T22:13:13
+# Params: $1 being SHA of commit
 git_changeDates()
 {
+  functionCallPreamble
+  
+  trace_echo "Call git_changeDates()"
+  
+  # Shift to disallow the usage of input arguments
+  declare -r sha=$1; shift
+  
   #https://stackoverflow.com/questions/43006278/change-git-author-date-git-committer-date-date-of-a-specific-previous-commit-on/43008328#43008328
   
   #for every commit in the weights or for the number of commits
@@ -199,10 +214,10 @@ git_changeDates()
   
   #NOTE: This works and changes the commit!
   git filter-branch --env-filter \
-     'if [ $GIT_COMMIT = bc82ece256783b864854c3e85cac69f29e6630ee ]
+     'if [ $GIT_COMMIT = $sha ]
      then
-        export GIT_AUTHOR_DATE="Fri Jan 2 21:38:53 2009 -0800"
-        export GIT_COMMITTER_DATE="Sat May 19 01:01:01 2007 -0700"
+        export GIT_AUTHOR_DATE="${newDates[$sha]}"
+        export GIT_COMMITTER_DATE="${newDates[$sha]}"
      fi'
 }
 
@@ -341,7 +356,11 @@ calculateNewHour()
   if [[ ${hourDecomposed[2]} -ge 60 ]]; then
   # Increment the higher level counter (minutes) and subtract 60
     let "hourDecomposed[1] += 1"
-    let "hourDecomposed[2] -= 60"
+    let "hourDecomposed[2] -= 60" #[[left]] - fill with zeros here...
+  fi
+  # If the value if less than 10, then it is a single-digit value, add leading zero
+  if [[ ${hourDecomposed[2]} -lt 10 ]]; then
+    hourDecomposed[2]="0${hourDecomposed[2]}"
   fi
 
   
@@ -350,6 +369,10 @@ calculateNewHour()
     # Increment the higher level counter (hours) and subtract 60
       let "hourDecomposed[0] += 1"
       let "hourDecomposed[1] -= 60"
+  fi
+  # If the value if less than 10, then it is a single-digit value, add leading zero
+  if [[ ${hourDecomposed[1]} -lt 10 ]]; then
+    hourDecomposed[1]="0${hourDecomposed[1]}"
   fi
 
   let "hourDecomposed[0] += hours"
@@ -360,17 +383,6 @@ calculateNewHour()
   
   trace_echo "zkamtar New decomposed hour is: "${hourDecomposed[@]}""
   
-  
-  # TODO: [[left]] Need to add zero in case of hours or minues would be on-digit... 
-  # for loop with iterator is probably needed, because there is a need to refer to
-  # the hourDecomposed map element...
-  for counter in "${hourDecomposed[@]}"; do 
-    if [[ ${#counter} -lt 2 ]]; then # [[ "$i" == '0' ]] less efficient because needs expanding the variable?
-      counter="0$counter"
-      echo "NEEW CORRECTED" $counter
-    fi
-  done
-
   echo "${hourDecomposed[@]}" #Tested and it is always (on one case of CLI) okay...
 }
 
@@ -391,8 +403,19 @@ calculateDate() #getting the current date not the date of the commit...
   # Calculate the share in percent of current commit
   local shareInPercent=$(bc <<< "scale=2; 100 * ${weights[$1]} / $accumulatedWeights")
 
-  declare -a testingNewCommitHour=("$(calculateNewHour "$commitHour" "$shareInPercent" "$duration_in_seconds")")
-  echo "TESTING"${testingNewCommitHour[@]}
+  # Calculate the new hour of commit
+  declare -r commitHourNew=("$(calculateNewHour "$commitHour" "$shareInPercent" "$duration_in_seconds")")
+  IFS=" " read -a commitHourNewDecomposed <<< $commitHourNew
+  
+  
+  
+  
+  
+  echo "TESTING"${commitHourNewDecomposed[@]}
+  echo "HOUR"${commitHourNewDecomposed[0]}
+  echo "SECONDS"${commitHourNewDecomposed[2]}
+  
+  #[[left]]
   
   declare -a dateDecomposed
   
@@ -433,7 +456,7 @@ calculateDate() #getting the current date not the date of the commit...
   #  var="Sun Feb 14 14:01:04 2021 +0100"
   #  echo $var | awk '{gsub($4, "15:01:04"); print}' - BEGIN in awk was the problem...
   newDate=$(echo $commitDate | 	
-    awk -v hour="${hourDecomposed[0]}" -v minutes="${hourDecomposed[1]}" -v seconds="${hourDecomposed[2]}" '
+    awk -v hour="${commitHourNewDecomposed[0]}" -v minutes="${commitHourNewDecomposed[1]}" -v seconds="${commitHourNewDecomposed[2]}" '
       {gsub($4, hour":"minutes":"seconds); print}')
     
   echo "NEW DATE HERE:""$newDate"
@@ -541,7 +564,7 @@ do
 done
 
 #Extracts the hour currently
-modifyDate "$date"
+modifyDate "$date" # Modify date for every commit passed to the script...
 #normalizeWeights
 
 #git_changeDates
