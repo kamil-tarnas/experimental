@@ -10,7 +10,7 @@ else
 fi
 
 # && in case of any operation fails in the chain
-git add -u && git commit -m "$commitMsg" && git push HEAD:refs/heads/master
+git add -u && git commit -m "$commitMsg" && git push origin HEAD:refs/heads/master
 
 if [ $? -ne 0 ]; then
   echo "Adding, committing and pushing failed!"
