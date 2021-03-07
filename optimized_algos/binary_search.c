@@ -72,3 +72,40 @@ int BinarySearch(int* array, unsigned arrayLen, unsigned searchedElement)
 
 	return -1;
 }
+
+
+int BinarySearchStandard(int* array, unsigned arrayLen, unsigned searchedElement)
+{
+	int low = 0;
+	int high = arrayLen;
+	int pos;
+
+	while (low <= high)
+	{
+		pos = (low + high) / 2;
+
+		if (array[pos] == searchedElement)
+		{
+			return pos;
+		}
+		else if (array[pos] > searchedElement)
+		{
+			// look in the low bound
+			high = pos - 1;
+		}
+		else if (array[pos] < searchedElement)
+		{
+			// look in the high bound
+			low = pos + 1;
+		}
+	}
+
+	return -1;
+}
+
+
+
+
+
+
+
