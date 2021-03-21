@@ -55,7 +55,9 @@ public:
 	//http://www.vollmann.ch/en/blog/implementing-move-assignment-variations-in-c++.html
 	NamedPoint(NamedPoint&& rhs) : x(rhs.x), y(rhs.y)
 	{
-		std::swap(name_m, rhs.name_m);
+		// Just steal the pointer and make the rhs blank...
+		name_m = rhs.name_m;
+		rhs.name_m = nullptr;
 	}
 //	NamedPoint& operator=(const NamedPoint& rhs)
 //	{
