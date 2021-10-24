@@ -32,8 +32,47 @@ double GetOverrideRate(std::vector<std::vector<bool>> bitmaps) // At which overr
 {
 	std::size_t numberOfBitmaps = bitmaps.size();
 
+	// Assuming the bitmaps are identical length
+	// Lenght is the number of slots
+	std::size_t lengthOfBitmap = bitmaps.at(0).size();
+
 	// Assert that each bitmap has the same number of elements
 	// TODO: Introduce a measure over different length bitmaps (?)
+
+	double overrideRate = 0;
+
+	// 1. Definition - average of partial similarity
+	for (std::size_t slot = 0; slot < lengthOfBitmap; slot++)
+	{
+		std::size_t numberOfSetSlots = 0;
+		std::size_t numberOfClearSlots = 0;
+
+		// Can make those calculations more efficient by matrixed SIMD...
+		for (auto& bitmap: bitmaps)
+		{
+			if (bitmap.at(slot) == true)
+			{
+				numberOfSetSlots++;
+			}
+			else
+			{
+				numberOfClearSlots++;
+			}
+		}
+
+		// If we have the number of bits set in the given slot among all the bitmaps
+		// then calculate the average partial similarity
+		double similaritySetSlots = (double)numberOfSetSlots / (double)lengthOfBitmap;
+		double similarityClearSlots = (double)numberOfClearSlots / (double)lengthOfBitmap;
+
+		// Is this the same as average? does the double type impacts it?
+		overrideRate += ((similaritySetSlots > similarityClearSlots) ?
+				          similaritySetSlots : similarityClearSlots) / (double)(slot + 1);
+	}
+	// 2. Definition - average of to-bitmap comparison of all the pair that can be made out of the set (A, B, C)
+	// Generate all the n-tuples from  m-sets (2-tuples of numberOfBitmaps-sets in this case) - variations without repetition
+	// TODO
+	return overrideRate;
 
 }
 
