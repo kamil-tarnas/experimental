@@ -1,4 +1,7 @@
+// Note: override rate is NOT the rate of similarity...
+
 #include <vector>
+#include <iostream>
 
 // Work to be done here:
 // Calculate the coverity for existing bitmaps (?)
@@ -21,6 +24,31 @@
 // 2. Use the average (arithmetic (?))
 //    of the two-bitmap similarity for all the pair that can be made out of the set (A, B, C)  (AB, BC, AC)
 
+// Test data
+
+// Can this just be implicitly converted from 0s and 1s?
+std::vector<std::vector<bool>> bitmaps =
+{
+		{false, true, false, true, true},
+		{false, true, false, false, false},
+		{false, true, false, true, false},
+		{false, true, false, true, true}
+};
+
+// Generate random data (?)
+std::vector<std::vector<bool>> bitmaps2 =
+{
+		{0, 1, 0, 1, 1},
+		{0, 1, 0, 0, 0},
+		{0, 1, 0, 1, 0},
+		{0, 1, 0, 1, 1},
+
+		{1, 1, 1, 1, 0},
+		{1, 1, 1, 1, 0},
+		{1, 1, 1, 1, 1},
+		{0, 0, 0, 0, 0}
+};
+
 void FindOptimalOverridingBitmap(int coverity,
 		                         std::vector<bool> unavailable,
 								 std::vector<bool> unfavourable,
@@ -39,6 +67,7 @@ double GetOverrideRate(std::vector<std::vector<bool>> bitmaps) // At which overr
 	// Assert that each bitmap has the same number of elements
 	// TODO: Introduce a measure over different length bitmaps (?)
 
+	// No need to initialize - it would be multiplied by slot == 0 at first iteration
 	double overrideRate = 0;
 
 	// 1. Definition - average of partial similarity
@@ -62,12 +91,14 @@ double GetOverrideRate(std::vector<std::vector<bool>> bitmaps) // At which overr
 
 		// If we have the number of bits set in the given slot among all the bitmaps
 		// then calculate the average partial similarity
-		double similaritySetSlots = (double)numberOfSetSlots / (double)lengthOfBitmap;
-		double similarityClearSlots = (double)numberOfClearSlots / (double)lengthOfBitmap;
+		double similaritySetSlots = (double)numberOfSetSlots / (double)numberOfBitmaps;
+		double similarityClearSlots = (double)numberOfClearSlots / (double)numberOfBitmaps;
 
-		// Is this the same as average? does the double type impacts it?
-		overrideRate += ((similaritySetSlots > similarityClearSlots) ?
-				          similaritySetSlots : similarityClearSlots) / (double)(slot + 1);
+		double similarity = (similaritySetSlots > similarityClearSlots) ? similaritySetSlots : similarityClearSlots;
+
+		// Is this the same as average? does the double type impacts it in comparison to one compound average at the end?
+		// What is the difference and how can it skew the results?
+		overrideRate = ((overrideRate * slot) + similarity) / (slot + 1);
 	}
 	// 2. Definition - average of to-bitmap comparison of all the pair that can be made out of the set (A, B, C)
 	// Generate all the n-tuples from  m-sets (2-tuples of numberOfBitmaps-sets in this case) - variations without repetition
@@ -86,5 +117,7 @@ void FindOptimalOverridingBitmap(int coverity,
 
 int main()
 {
-	return 0;
+   std::cout << GetOverrideRate(bitmaps) << std::endl;
+   std::cout << GetOverrideRate(bitmaps2) << std::endl;
+   return 0;
 }
