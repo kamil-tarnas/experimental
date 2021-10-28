@@ -1,0 +1,11 @@
+ {3, ENUM_53,    2, {RMS_HIGH,       RMS_AVERAGE},   {THIRD,  NA},     2, {true, true},  {{0,   0}, {0,     0}}},
+ {2, ENUM_2,     2, {RMS_VERY_HIGH,  RMS_AVERAGE},   {SECOND, SECOND}, 2, {true, true},  {{10,  0}, {23800, 0}}},
+ {6, ENUM_2,     1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, FIRST},  2, {true, false}, {{20,  0}, {0,     0}}},
+ {3, ENUM_53,    1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, FIRST},  2, {true, true},  {{10, 20}, {0,     0}}},
+ {4, ENUM_2,     1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, THIRD},  2, {true, true},  {{10, 20}, {42900, 0}}},
+ {2, ENUM_2,     2, {RMS_AVERAGE,    RMS_VERY_HIGH}, {SECOND, THIRD},  2, {true, true},  {{30,  0}, {0,     0}}},
+ {1, ENUM_2,     1, {RMS_LOW,        RMS_LOW},       {SECOND, FIRST},  2, {true, true},  {{40, 20}, {24900, 0}}},
+ {2, ENUM_2,     1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, FIRST},  1, {true, false}, {{10,  0}, {0,     0}}},
+ {3, ENUM_5,     1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, THIRD},  2, {true, false}, {{10, 20}, {42900, 0}}},
+ {2, ENUM_53,    1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, THIRD},  2, {true, true},  {{10, 30}, {42900, 0}}},
+ {3, ENUM_53,    1, {RMS_AVERAGE,    RMS_AVERAGE},   {SECOND, THIRD},  2, {false,false}, {{10, 20}, {42900, 0}}}

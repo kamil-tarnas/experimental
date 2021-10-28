@@ -5,7 +5,68 @@
 #include <vector>
 #include <algorithm>
 
-std::string singleLine;
+// For file manipulation
+#include <fstream>
+
+
+class LogFile
+{
+public:
+  LogFile(const std::string& fileName);
+
+  ~LogFile();
+
+  LogFile(const LogFile& rhs) = delete;
+
+  LogFile(LogFile&& rhs);
+
+  LogFile& operator=(const LogFile& rhs) = delete;
+
+  LogFile& operator=(LogFile&& rhs);
+
+  // Could be auto return type, but C++14 is needed for that
+  std::istream& GetLine(std::string& line);
+
+private:
+  std::ifstream fileStream_m;
+};
+
+
+LogFile::LogFile(const std::string& fileName)
+{
+  fileStream_m.open(fileName, std::ios::in);
+}
+
+
+LogFile::~LogFile()
+{
+  fileStream_m.close();
+}
+
+
+LogFile::LogFile(LogFile&& rhs)
+{
+  fileStream_m = std::move(rhs.fileStream_m);
+}
+
+
+LogFile& LogFile::operator=(LogFile&& rhs)
+{
+  fileStream_m = std::move(rhs.fileStream_m);
+  return *this;
+}
+
+
+// Could be auto return type, but C++14 is needed for that
+std::istream& LogFile::GetLine(std::string& line)
+{
+  return std::getline(fileStream_m, line);
+}
+
+std::string goldenPattern =
+" {.someVariable = #,                                 .otherVar = #,                   .metaData = #,\n"
+"  .additionalCounter = #,                            .record = #,                     .widgetNo = #,\n"
+"  .tail = #,                                         .head = #\n},";
 
 // For the reference template to write the values
 std::string stringTemplate;
@@ -27,6 +88,39 @@ inline void AddSpacesToAggregate(std::string& aggregateInit)
 			aggregateInit.insert(charIter, " ");
 		}
 	}
+}
+
+std::string Substitute(std::string goldenPattern, const std::vector<std::string>& values)
+{
+	std::size_t posIter = 0;
+
+	for (std::size_t valueIter = 0; valueIter < values.size(); valueIter++)
+	{
+		// Find the "#"
+		posIter = goldenPattern.find_first_of("#", posIter);
+
+		// Erase the "#"
+		goldenPattern.erase(posIter, 1);
+
+		// Insert the value
+		std::string valueToInsert = values.at(valueIter);
+		goldenPattern.insert(posIter, valueToInsert);
+
+		// Erase the excess spaces
+		// TODO: Do not do it if it contains "\n" !!!!
+		// TODO: Probably here is again better to just iterate ove r characters
+		std::string partToCut = goldenPattern.substr(posIter + 1 + valueToInsert.size(), valueToInsert.size() );
+		// See if the part contains "\n" - if so, then do not remove it...
+		if (partToCut.find("\n") == std::string::npos)
+		{
+			goldenPattern.erase(posIter + 1 + valueToInsert.size(), valueToInsert.size() - 1);
+		}
+	}
+
+	// End conditions
+	// 1. find_first_of gives std::string::npos)
+	// 2. no more elements in vector
+	return goldenPattern;
 }
 
 std::vector<std::string> GetValuesFromRow(std::string row)
@@ -61,9 +155,10 @@ std::vector<std::string> GetValuesFromRow(std::string row)
 	// Check for balancing the "{"
 	std::size_t bracketBalance = 0;
 
+	std::size_t charIter = posOfOpeningBracket + 1;
 	// Start iterating over the string from the next character
-	for (std::size_t charIter = posOfOpeningBracket + 1;
-		 charIter < posOfClosingBracket;
+	for (;
+		 charIter <= posOfClosingBracket; // Changed for the case "else if (row.at(charIter) == '}') "
 		 charIter++)
 	{
 		// Start accumulating characters
@@ -117,17 +212,51 @@ std::vector<std::string> GetValuesFromRow(std::string row)
 			}
 		}
 	}
+
+	// The last character handling...
+	// TODO: Common code - can be extracted to separate subroutine
+	// Need to extract the value
+	std::string value = row.substr(posOfAccumStart, charIter - posOfAccumStart - 1);
+
+	// Remove all spaces surrounding the value
+	value.erase(std::remove(value.begin(), value.end(), ' '), value.end());
+
+	// We need to add spaces after each comma if it is an aggregate
+	// TODO: No need to call that if it is not an aggregate...
+	AddSpacesToAggregate(value);
+
+	// Push back to the vector in ordered sequence
+	values.push_back(value);
+
 	return values;
 }
 
 int main()
 {
-	std::vector<std::string> tokens;
-	tokens = GetValuesFromRow(singleLine);
-	for (auto& vecElem: tokens)
+//	std::vector<std::string> tokens;
+//	tokens = GetValuesFromRow(singleLine);
+//	for (auto& vecElem: tokens)
+//	{
+//		std::cout << vecElem << std::endl;
+//	}
+//
+//	std:: cout << "##################\n\n\n";
+//	std::cout << goldenPattern;
+//
+//	std::cout << goldenPatternTwo;
+//	std::cout << Substitute(goldenPatternTwo, tokens);
+
+	LogFile file("sample");
+	std::string line;
+
+	while (file.GetLine(line))
 	{
-		std::cout << vecElem << std::endl;
+		std::vector<std::string> tokens;
+		tokens = GetValuesFromRow(line);
+		std::cout << Substitute(goldenPattern, tokens);
+		std::cout << std::endl;
 	}
+
 	return 0;
 }
 
