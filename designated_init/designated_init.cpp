@@ -1,5 +1,33 @@
 // Have the primitives very easily binded to this client file...
 
+////////////////////////////////////////////////
+// Major limitations (functional limitations)
+// (limitations that limit the number of use cases that the program can handle)
+////////////////////////////////////////////////
+// 1.  Only one-dimensional arrays supported
+//     reasons for the limitation: due to "golden pattern" and GetLine() getting only a single line
+//     possible fix: have a var representing the array dimension  (could be read in) and do a strip-off for
+//                   the brackets "{}" (single row needs to have more "{}" stripped-off (need to break the
+//                   independence between iterations of GetLine() (?)
+// 2. Row (one single array element) needs to be on a single line - whole element needs to occupy only one line,
+//    breaking one array element on many lines (processing an element that spans across many lines) is not supported
+//    reasons for the limitation: searching for opening and closing bracket (pair of "{" and corresponding "}") is
+//                                done on one-line boundaries (we do search for it only in one, "active" line)
+//    possible fix: need to read more than one line if closing bracket (or the bracket balance) is in separate line
+//                  need to concatenate the lines (can be combined into a hybrid "row" or "entry" representing many lines)
+//                  and process such entity
+
+
+////////////////////////////////////////////////////
+// Minor limitations (non-functional limitations)
+// (limitations that do not limit the number of cases that the program can handle)
+////////////////////////////////////////////////////
+// 1. The comma is added to every entry (row, array element)
+//    reasons for the limitation: due to single "golden pattern" for each and every row, no information of
+//                                how many rows there are to process
+//    possible fix: detect the last row (array element) and do not add the comma at the end
+
+
 #include <string>
 #include <iostream>
 #include <vector>
