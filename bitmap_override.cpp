@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <iostream>
+#include <utility>
+#include <algorithm>
 
 // Work to be done here:
 // Calculate the coverity for existing bitmaps (?)
@@ -53,6 +55,92 @@ void FindOptimalOverridingBitmap(int coverity,
 		                         std::vector<bool> unavailable,
 								 std::vector<bool> unfavourable,
 								 std::vector<std::vector<bool>> existing);
+
+std::size_t NumberOfSetElem(std::vector<bool>& bitmap)
+{
+	std::size_t numberOfSetElem = 0;
+
+	for (const auto& elem: bitmap)
+	{
+		if (elem == true)
+		{
+			numberOfSetElem++;
+		}
+	}
+	return numberOfSetElem;
+
+	//return std::count(bitmap.begin(), bitmap.end(), true);
+}
+
+void SortByTheNumberOfSetElemDescending(std::vector<std::vector<bool>>& bitmaps)
+{
+	std::vector<std::pair<std::size_t, std::size_t>> numOfSetElem;
+	std::size_t bitmapIndex = 0;
+
+	for (const auto& elem: bitmaps)
+	{
+		numOfSetElem.push_back(std::make_pair(bitmapIndex, std::count(elem.begin(), elem.end(), true)));
+		bitmapIndex++;
+	}
+
+	std::sort(numOfSetElem.begin(), numOfSetElem.end(),
+			  [](const std::pair<std::size_t, std::size_t>& a, const std::pair<std::size_t, std::size_t>& b)
+			  //[](auto& a, auto& b)
+			  {return a.second > b.second;});
+
+	std::vector<std::vector<bool>> bitmapsOut;
+	// Resize to be the same size as the input "bitmaps"
+
+	for (const auto& elem: numOfSetElem)
+	{
+		bitmapsOut.push_back(bitmaps.at(elem.first));
+	}
+
+	// Assign the output bitmap
+	bitmaps = bitmapsOut;
+}
+
+double GetOverrideRateComparision(std::vector<bool>& higherOrderSetBm, std::vector<bool>& lowerOrderSetBm)
+{
+	// Assuming both bitmaps are the same size
+
+	double bitmapSize = higherOrderSetBm.size();
+	double numberOfSet = 0;
+
+	for (std::size_t iter = 0; iter < higherOrderSetBm.size(); iter++)
+	{
+		if (higherOrderSetBm.at(iter) || ~(lowerOrderSetBm.at(iter)))
+		{
+			numberOfSet++;
+		}
+	}
+
+	return numberOfSet / bitmapSize;
+}
+
+double GetOverrideRateCorrect(std::vector<std::vector<bool>>& bitmaps)
+{
+	SortByTheNumberOfSetElemDescending(bitmaps);
+
+	// Compare starting from the second one
+	// 2 compare with 1
+	// 3 compare with 1 and 2 (divide the parameter by two)
+	// 4 compare with 1, 2 and 3 (divide the outcome by three)
+
+	double numberOfComparisions = 0;
+	double coeff = 0;
+
+	for (auto bitmapIter = bitmaps.begin() + 1; bitmapIter < bitmaps.end(); bitmapIter++)
+	{
+		for (auto bitmapToCompare = bitmaps.begin(); bitmapToCompare < bitmapIter; bitmapToCompare++)
+		{
+			// Compare the bitmap
+			coeff += GetOverrideRateComparision(*bitmapToCompare, *bitmapIter);
+			numberOfComparisions++;
+		}
+	}
+	return coeff / numberOfComparisions; // TODO: Need to correct by the "number of comparisions" factor
+}
 
 double GetOverrideRate(std::vector<std::vector<bool>> bitmaps);
 
@@ -119,5 +207,7 @@ int main()
 {
    std::cout << GetOverrideRate(bitmaps) << std::endl;
    std::cout << GetOverrideRate(bitmaps2) << std::endl;
+
+   std::cout << GetOverrideRateCorrect(bitmaps) << std::endl;
    return 0;
 }
