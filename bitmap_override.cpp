@@ -29,7 +29,7 @@
 // Test data
 
 // Can this just be implicitly converted from 0s and 1s?
-std::vector<std::vector<bool>> bitmaps =
+std::vector<std::vector<bool>> bitmaps = // Override rate is 1 (fully overridable...)
 {
 		{false, true, false, true, true},
 		{false, true, false, false, false},
@@ -109,7 +109,7 @@ double GetOverrideRateComparision(std::vector<bool>& higherOrderSetBm, std::vect
 
 	for (std::size_t iter = 0; iter < higherOrderSetBm.size(); iter++)
 	{
-		if (higherOrderSetBm.at(iter) || ~(lowerOrderSetBm.at(iter)))
+		if (higherOrderSetBm.at(iter) || !(lowerOrderSetBm.at(iter)))
 		{
 			numberOfSet++;
 		}
@@ -209,5 +209,10 @@ int main()
    std::cout << GetOverrideRate(bitmaps2) << std::endl;
 
    std::cout << GetOverrideRateCorrect(bitmaps) << std::endl;
+   //std::cout << GetOverrideRateCorrect(bitmaps2) << std::endl;
+   std::cout << "$$$$" << std::endl;
+
+   std::cout << GetOverrideRateComparision(bitmaps2.at(0), bitmaps2.at(1)) << std::endl;
+   std::cout << GetOverrideRateComparision(bitmaps2.at(1), bitmaps2.at(0)) << std::endl;
    return 0;
 }
