@@ -1,4 +1,7 @@
 // Note: override rate is NOT the rate of similarity...
+// Note: We can use a bruteforce method for introducing new bitmap (given the numbers of bits that are supposed to be set
+//       and trying all of the combinations and checking the override rate (how to generate all the npossibilities?, n/k tuples
+//       probably (?))
 
 #include <vector>
 #include <iostream>
