@@ -15,6 +15,13 @@
 // Which one is more important? Have some synthetic measure of that?
 // One more important than the other? That would make it a two-step algo, which would be simpler probably...
 
+// Have it in a two-step algo?
+// So, firstly make the new bitmaps have the same override rate
+// Then, chose the bitmaps that have the least new unfavourable subframes (?)
+// (this condition above seems that needs additional information or direction -
+//  for example, if the rate is the same should we go with the increase in signle bitmap
+//  or we should distribute it over several bitmaps) (???)
+
 
 // Units to use (definitions of the units that will be used):
 // How to measure the similarity across two bitmaps?
@@ -28,6 +35,51 @@
 
 // Test data
 
+
+// Utility to generate test data to plot "things"
+// To check things that are specified on page 4 in the points defined on the right side (1. and 2.)
+// yeah, so, check the "single discrepancy" influence on override rate, in the function of: firstly bm length and then
+// the amount of bitmaps, and then both xD
+
+// How "single discrepancy" influence on override rate? (1 - ((1/m)/((n^2 - n)/2))), where:
+// n - the number of bitmaps in set
+// m - bitmap length
+// plot (1 - ((1/m)/((n^2 - n)/2)))
+// (1 - ((1/m)/((n^2 - n)/2))), where n=4 m=5
+// plot (1 - ((1/m)/((n^2 - n)/2))) {n,0,20} {m,0,20}
+// We approach discrepancy==1 slower with increasing m than with increasing n
+// We approach quicker discrepancy==1 with increasing n than m
+
+// plot (1 - ((1/m)/((n^2 - n)/2))) {n,2,100} {m,1,100}
+
+// Plot of reasonable values
+//plot (1 - ((1/m)/((n^2 - n)/2))) {n,1,20} {m,1,20}
+// Yeah, so what has bigger influence on the override rate? m or n? Plot the f and its derivatives
+
+// d / dm dn
+//d/dm dn (1 - ((1/m)/((n^2 - n)/2)))
+// Does the discrepancy grow faster with n or m increasing?
+
+
+
+// Some definitions:
+
+// higher order bitmap - bitmap that has more "ones", "1s" set, more bits set, more "true" values as its members
+
+// lower order bitmap - bitmap that has less "ones" set
+
+// single discrepancy - what does it mean? We do comparisions in terms of pairs of bitmaps in the set, so
+// lower order bitmap (that has less ones) would yield MORE discrepancy overall than higher order bitmap
+// Do we want to define "single discrepancy" as "one" bit mismatch in ONE pair of comparisions?
+// Yeah, that could be a "single" discrepancy
+// That is probably not introducable into every bm set! (by changing only one bit value, even for the most optimal "order" bitmap) (???)
+// Single discrepancy would "show up" the same number of times that the comparisions are made
+
+// Number of comparisions in which a bitmap from a set of bitmaps is used is equal to n-1, where n is the number of bitmaps...
+
+// order ambiguity - check the comment in GetOverrideRateCorrect()
+// Introduce a shuffle bitmaps thing - that can print all the order of bitmaps in the set (the number of possible orders is n!)
+
 // Can this just be implicitly converted from 0s and 1s?
 std::vector<std::vector<bool>> bitmaps = // Override rate is 1 (fully overridable...)
 {
@@ -36,6 +88,26 @@ std::vector<std::vector<bool>> bitmaps = // Override rate is 1 (fully overridabl
 		{false, true, false, true, false},
 		{false, true, false, true, true}
 };
+
+
+// Can this just be implicitly converted from 0s and 1s?
+std::vector<std::vector<bool>> bitmapsSingleDiscrepancy = // Override rate is 1 (fully overridable...)
+{
+		{false, true, false, true, true},
+		{false, true, false, false, true}, //the same density of single row bitmap
+		{false, true, false, true, false}, //the same density of single row bitmap
+		{false, true, false, true, true}
+};
+
+std::vector<std::vector<bool>> bitmapsSingleDiscrepancyReversed = // Override rate is 1 (fully overridable...)
+{
+		{false, true, false, true, true},
+		{false, true, false, true, false}, //the same density of single row bitmap // BUT ROWS reversed - difference to the previous one
+		{false, true, false, false, true}, //the same density of single row bitmap
+		{false, true, false, true, true}
+};
+
+// The above seems it is the same, but need to shuffle and check...
 
 // Generate random data (?)
 std::vector<std::vector<bool>> bitmaps2 =
@@ -49,6 +121,13 @@ std::vector<std::vector<bool>> bitmaps2 =
 		{1, 1, 1, 1, 0},
 		{1, 1, 1, 1, 1},
 		{0, 0, 0, 0, 0}
+};
+
+// Generate random data (?)
+std::vector<std::vector<bool>> bitmaps3 =
+{
+		{0, 1, 0, 1, 1},
+		{0, 1, 0, 0, 0}
 };
 
 void FindOptimalOverridingBitmap(int coverity,
@@ -72,6 +151,8 @@ std::size_t NumberOfSetElem(std::vector<bool>& bitmap)
 	//return std::count(bitmap.begin(), bitmap.end(), true);
 }
 
+
+// TODO: Analyze the code efficiency of his solution (where moves and RVO are used)
 void SortByTheNumberOfSetElemDescending(std::vector<std::vector<bool>>& bitmaps)
 {
 	std::vector<std::pair<std::size_t, std::size_t>> numOfSetElem;
@@ -114,18 +195,24 @@ double GetOverrideRateComparision(std::vector<bool>& higherOrderSetBm, std::vect
 			numberOfSet++;
 		}
 	}
-
 	return numberOfSet / bitmapSize;
 }
 
 double GetOverrideRateCorrect(std::vector<std::vector<bool>>& bitmaps)
 {
+	// Isn't that a hole in the definitions?
+	// Could the set, depending on the sorting, have different discrepancy?
+	// Counter example - a set of bms in which TWO have THE SAME density (number of bits set) but
+	// depending on the sorting DIFFERENT override rate can be calculated...
+	// The problem gets called "order ambigutity" and I'll check how it can be solved...
 	SortByTheNumberOfSetElemDescending(bitmaps);
 
 	// Compare starting from the second one
 	// 2 compare with 1
 	// 3 compare with 1 and 2 (divide the parameter by two)
 	// 4 compare with 1, 2 and 3 (divide the outcome by three)
+	// The number of comparisions that need to be make is ((n^2) - n) / 2
+	// .w file - (n^2 - n) /2, where n=4
 
 	double numberOfComparisions = 0;
 	double coeff = 0;
@@ -134,12 +221,16 @@ double GetOverrideRateCorrect(std::vector<std::vector<bool>>& bitmaps)
 	{
 		for (auto bitmapToCompare = bitmaps.begin(); bitmapToCompare < bitmapIter; bitmapToCompare++)
 		{
+			double singleComparisonCoeff = GetOverrideRateComparision(*bitmapToCompare, *bitmapIter);
 			// Compare the bitmap
-			coeff += GetOverrideRateComparision(*bitmapToCompare, *bitmapIter);
+			coeff += singleComparisonCoeff;
 			numberOfComparisions++;
+			std::cout << "\n singleComparisonCoeff = " << singleComparisonCoeff << std::endl;
 		}
 	}
-	return coeff / numberOfComparisions; // TODO: Need to correct by the "number of comparisions" factor
+	std::cout << "\n coeff = " << coeff << std::endl;
+	std::cout << "\n numberOfComparisons = " << numberOfComparisions << std::endl;
+	return coeff / numberOfComparisions;
 }
 
 double GetOverrideRate(std::vector<std::vector<bool>> bitmaps);
@@ -203,16 +294,65 @@ void FindOptimalOverridingBitmap(int coverity,
 
 }
 
+
+double GetDensity(const std::vector<bool>& bitmap)
+{
+	std::size_t numberOfSet = 0;
+	for (const auto& elem: bitmap)
+	{
+		if (elem == true)
+		{
+			numberOfSet++;
+		}
+	}
+	return numberOfSet / bitmap.size();
+}
+
+
+// Assumes all the bitmaps in the set are the same length
+double GetDensity(const std::vector<std::vector<bool>>& bitmaps)
+{
+	// Have a partial handling of the coeff for each bitmap
+	// TODO: What are the limits here?
+	// TODO: Numeric errors here? For partial handling versus the whole in one go?
+	double partialDensity = 0.0;
+	for (const auto& bitmap: bitmaps)
+	{
+		partialDensity += GetDensity(bitmap);
+	}
+	return partialDensity / bitmaps.size();
+}
+
+
 int main()
 {
-   std::cout << GetOverrideRate(bitmaps) << std::endl;
-   std::cout << GetOverrideRate(bitmaps2) << std::endl;
+//   double overrideRate = GetOverrideRate(bitmaps);
+//   std::cout << "GetOverrideRate(bitmaps) = " << overrideRate << std::endl;
+//   std::cout << GetOverrideRate(bitmaps2) << std::endl;
 
-   std::cout << GetOverrideRateCorrect(bitmaps) << std::endl;
-   //std::cout << GetOverrideRateCorrect(bitmaps2) << std::endl;
+   double overrideRateCorrect = GetOverrideRateCorrect(bitmaps);
+   // Do not sort it for now...
+   // TODO: Get a utility to print all struct?
+   // TODO: Come up with the equation for commarisions...
+   std::cout << "GetOverrideRateCorrect(bitmaps) = " << overrideRateCorrect << std::endl;
+
+   overrideRateCorrect = GetOverrideRateCorrect(bitmaps2);
+
+   std::cout << "GetOverrideRateCorrect(bitmaps2) = "<< overrideRateCorrect << std::endl;
    std::cout << "$$$$" << std::endl;
 
-   std::cout << GetOverrideRateComparision(bitmaps2.at(0), bitmaps2.at(1)) << std::endl;
-   std::cout << GetOverrideRateComparision(bitmaps2.at(1), bitmaps2.at(0)) << std::endl;
+   overrideRateCorrect = GetOverrideRateCorrect(bitmapsSingleDiscrepancy);
+
+   std::cout << "GetOverrideRateCorrect(bitmapsSingleDiscrepancy) = "<< overrideRateCorrect << std::endl;
+   std::cout << "$$$$" << std::endl;
+
+   overrideRateCorrect = GetOverrideRateCorrect(bitmapsSingleDiscrepancyReversed);
+
+   std::cout << "GetOverrideRateCorrect(bitmapsSingleDiscrepancyReversed) = "<< overrideRateCorrect << std::endl;
+   std::cout << "$$$$" << std::endl;
+
+   // Comparing the two bitmaps in regards to the "override rate"
+   std::cout << GetOverrideRateComparision(bitmaps3.at(0), bitmaps3.at(1)) << std::endl;
+   std::cout << GetOverrideRateComparision(bitmaps3.at(1), bitmaps3.at(0)) << std::endl;
    return 0;
 }
