@@ -1,12 +1,31 @@
+// The grand plan is to:
+// 1. come up with an measure rate for measuring the override rate of a set of a bitmap (we are here XD)
+// 2. investigate the characterisctics of that measure (and also a bit here XD)
+// 3. based on that measure try to find the best subsequent bitmap of given characteristics (for example number of set bits)
+//    (the backup method can be of course a brute force :( if nothing better can be found) Generation of all possible
+//    bitmaps is also a permutation on a set with repeating items...
+// 4. Have the bitmap - ta dam...
+
 // Note: override rate is NOT the rate of similarity...
 // Note: We can use a bruteforce method for introducing new bitmap (given the numbers of bits that are supposed to be set
 //       and trying all of the combinations and checking the override rate (how to generate all the npossibilities?, n/k tuples
 //       probably (?))
 
+// MVP: Not having unfavourable and unavaiable subframes. Just a new bitmap of density
+
+// Nominate core functions, like Core_GetOverrideRateComparision_bm
+// "Core" functions need to have the only aruments and return values of fundamental types - bmSet, bm and so on...
+
 #include <vector>
 #include <iostream>
 #include <utility>
 #include <algorithm>
+
+// For now, a global vector
+std::vector<std::pair<double, std::vector<bool>>> outputBitmaps;
+
+using bmSet = std::vector<std::vector<bool>>;
+using bm = std::vector<bool>;
 
 // Work to be done here:
 // Calculate the coverity for existing bitmaps (?)
@@ -17,10 +36,13 @@
 // Maximize the average percent of coverity defined as (A, B, C)  (AB, BC, AC) (are those variations?)
 // Which one is more important? Have some synthetic measure of that?
 // One more important than the other? That would make it a two-step algo, which would be simpler probably...
+// Have also the unavailable subframes, that we just cannot have the permutation with 1s on that positions
 
 // Have it in a two-step algo?
 // So, firstly make the new bitmaps have the same override rate
 // Then, chose the bitmaps that have the least new unfavourable subframes (?)
+// Maybe the unfavourable subframes weight (the deciding factor) can be expressed as a fraction of single discrepancy?
+
 // (this condition above seems that needs additional information or direction -
 //  for example, if the rate is the same should we go with the increase in signle bitmap
 //  or we should distribute it over several bitmaps) (???)
@@ -109,6 +131,47 @@ std::vector<std::vector<bool>> bitmapsSingleDiscrepancyReversed = // Override ra
 		{false, true, false, false, true}, //the same density of single row bitmap
 		{false, true, false, true, true}
 };
+
+
+// Stress testing
+std::vector<std::vector<bool>> bitmapsLong = //m == 10
+{
+		{false, true, false, true, true, false, true, false, true, true},
+		{false, true, false, false, true, false, true, false, true, true}, //the same density of single row bitmap
+		{false, true, false, true, false, false, true, false, true, true}, //the same density of single row bitmap
+		{false, true, false, true, true, false, true, false, true, true}
+};
+
+
+
+// The result would be held in std::vector<std::vector<std::vector<bool>>>
+
+// Permutate the bitmap above
+void Permute(std::vector<std::vector<bool>>& a, int l, int r, std::vector<std::vector<std::vector<bool>>>& out)
+{
+	if (l == r)
+	{
+		// Action of the permute
+		out.push_back(a);
+	}
+	else
+	{
+		// Instead of swapping, just have a decision space to exhaust...
+		for (int i = l; i <= r; ++i)
+		{
+			// Swap
+			std::swap(a[l], a[i]);
+
+			// Recursive call
+			Permute(a, l + 1, r, out);
+
+			// Backtrack
+			std::swap(a[l], a[i]);
+		}
+	}
+}
+
+
 
 // The above seems it is the same, but need to shuffle and check...
 
@@ -228,11 +291,11 @@ double GetOverrideRateCorrect(std::vector<std::vector<bool>>& bitmaps)
 			// Compare the bitmap
 			coeff += singleComparisonCoeff;
 			numberOfComparisions++;
-			std::cout << "\n singleComparisonCoeff = " << singleComparisonCoeff << std::endl;
+			//std::cout << "\n singleComparisonCoeff = " << singleComparisonCoeff << std::endl;
 		}
 	}
-	std::cout << "\n coeff = " << coeff << std::endl;
-	std::cout << "\n numberOfComparisons = " << numberOfComparisions << std::endl;
+	//std::cout << "\n coeff = " << coeff << std::endl;
+	//std::cout << "\n numberOfComparisons = " << numberOfComparisions << std::endl;
 	return coeff / numberOfComparisions;
 }
 
@@ -289,6 +352,55 @@ double GetOverrideRate(std::vector<std::vector<bool>> bitmaps) // At which overr
 
 }
 
+void PermuteOneBitmap(std::vector<std::vector<bool>>& a, int l, int r, std::vector<bool>& newBitmap)
+{
+	// We will hit this 'if' if the bitmap is permuted
+	// Then (if l==r, so the bitmap is constructed) we will calculate the override rate:
+	// Comparing it to the whole set
+	// TODO: We do not generate unique bitmaps in such implementation
+	//       need to find something fundamental pattern to restrict the decision space.
+	//       The interface could be then also simplified - just passing the length of bitmap and
+	//       the number of set bits (density)
+	if (l == r) // I don't get this, why do we do it only in case l == r?
+	{
+		// Set with additional, new bitmap
+		std::vector<std::vector<bool>> b = a;
+		b.push_back(newBitmap);
+		// Action of the permute
+		auto overrideRate = GetOverrideRateCorrect(b);
+
+		std::cout << "Bitmap is: ";
+		// Print
+		for (const auto& bitmapElem: newBitmap)
+		{
+			std::cout << bitmapElem;
+		}
+
+		// Here we have the printing of the override rates for each bitmap...
+		// We can add this to, lets say a global vector (for now) and see which is the best bitmap...
+		std::cout << std::endl;
+		std::cout << " overrideRate of the bitmap is " << overrideRate << std::endl;
+
+		outputBitmaps.push_back(std::make_pair(overrideRate, newBitmap));
+
+	}
+	else
+	{
+		// Instead of swapping, just have a decision space to exhaust...
+		for (int i = l; i <= r; ++i)
+		{
+			// Swap
+			std::swap(newBitmap[l], newBitmap[i]);
+
+			// Recursive call
+			PermuteOneBitmap(a, l + 1, r, newBitmap);
+
+			// Backtrack
+			std::swap(newBitmap[l], newBitmap[i]);
+		}
+	}
+}
+
 void FindOptimalOverridingBitmap(int coverity,
 		                         std::vector<bool> unavailable,
 								 std::vector<bool> unfavourable,
@@ -333,6 +445,8 @@ int main()
 //   std::cout << "GetOverrideRate(bitmaps) = " << overrideRate << std::endl;
 //   std::cout << GetOverrideRate(bitmaps2) << std::endl;
 
+
+	// The GetOverrideCorrect take a set of bitmap, should that be reflected in the name?
    double overrideRateCorrect = GetOverrideRateCorrect(bitmaps);
    // Do not sort it for now...
    // TODO: Get a utility to print all struct?
@@ -353,6 +467,68 @@ int main()
 
    std::cout << "GetOverrideRateCorrect(bitmapsSingleDiscrepancyReversed) = "<< overrideRateCorrect << std::endl;
    std::cout << "$$$$" << std::endl;
+
+   std::cout << "########### here ############" << std::endl;
+
+   std::vector<std::vector<std::vector<bool>>> out;
+   Permute(bitmapsSingleDiscrepancy, 0, bitmapsSingleDiscrepancy.size() - 1, out);
+
+   for (auto & bitmapSet: out)
+   {
+	   std::vector<double> overrideRate;
+	   overrideRateCorrect = GetOverrideRateCorrect(bitmapSet);
+	   overrideRate.push_back(overrideRateCorrect);
+
+	   // Check if all the values are the same
+	   if (std::equal(overrideRate.begin(), overrideRate.end(), overrideRate.begin()))
+	   {
+	       std::cout << "All elems are equal\n";
+	   }
+	   else
+	   {
+		   std::cout << "ERROR: elements not equal!\n";
+	   }
+
+	   std::cout << "GetOverrideRateCorrect(bitmapSet) = "<< overrideRateCorrect << std::endl;
+	   std::cout << "$$$$" << std::endl;
+   }
+
+
+   // HERE IS TEH HEART OF THIS IMPLEMENTATION
+   //bitmapsSingleDiscrepancy
+   // Have a {false, true, false, true, true} m=5
+   // Permute the values in the vector and check the override rate by GetOverrideRateCorrect, biggest wins
+//   std::vector<bool> proposedBm = {false, true, false, true, true};
+//   PermuteOneBitmap(bitmapsSingleDiscrepancy, 0, bitmapsSingleDiscrepancy.size() - 1, proposedBm);
+
+   // We are permuting it anyway - better solution would be to have just the length and density passed
+   std::vector<bool> proposedBm = {false, true, false, true, true, false, true, false, true, true};
+   PermuteOneBitmap(bitmapsLong, 0, bitmapsLong.size() - 1, proposedBm);
+
+   // Sort the output bitmaps based on the value of override rate
+   std::sort(outputBitmaps.begin(), outputBitmaps.end(),
+	[](std::pair<double, std::vector<bool>> a, std::pair<double, std::vector<bool>> b)
+	  {return a.first > b.first;});
+
+   double highestOverr = outputBitmaps[0].first; //Output bitmaps is the vector of all the bitmaps
+
+
+   // Check if the bitmaps are the same and maybe just pick the best one...
+   std::cout << "In order of bitmaps\n";
+   // Loop over the bitmaps and print all the bitmaps that have the highest override rate...
+   for (auto & bm: outputBitmaps)
+   {
+	   if (bm.first == highestOverr)
+	   {
+			for (const auto& elem: bm.second)
+			{
+				std::cout << "\033[32m" << elem;
+			}
+			std::cout << std::endl;
+	   }
+	   std::cout << "\033[39m" << bm.first << std::endl;
+   }
+   std::cout << std::endl;
 
    // Comparing the two bitmaps in regards to the "override rate"
    std::cout << GetOverrideRateComparision(bitmaps3.at(0), bitmaps3.at(1)) << std::endl;
