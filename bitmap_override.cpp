@@ -146,13 +146,13 @@ std::vector<std::vector<bool>> bitmapsLong = //m == 10
 
 // The result would be held in std::vector<std::vector<std::vector<bool>>>
 
-// Permutate the bitmap above
+// Permutate the bitmap above (this is a permute of the SET of bitmaps)
 void Permute(std::vector<std::vector<bool>>& a, int l, int r, std::vector<std::vector<std::vector<bool>>>& out)
 {
 	if (l == r)
 	{
 		// Action of the permute
-		out.push_back(a);
+		out.push_back(a); // out is a container of bitmap sets (thus a vector of bitmap sets)
 	}
 	else
 	{
@@ -247,6 +247,9 @@ void SortByTheNumberOfSetElemDescending(std::vector<std::vector<bool>>& bitmaps)
 	bitmaps = bitmapsOut;
 }
 
+// Get the precision correct/flexible (it should matter to the scientific calculations)
+// Make it a template, but should that be even a free function?
+// Probably a good idea is to make the whole project OOP...
 double GetOverrideRateComparision(std::vector<bool>& higherOrderSetBm, std::vector<bool>& lowerOrderSetBm)
 {
 	// Assuming both bitmaps are the same size
@@ -352,7 +355,9 @@ double GetOverrideRate(std::vector<std::vector<bool>> bitmaps) // At which overr
 
 }
 
-void PermuteOneBitmap(std::vector<std::vector<bool>>& a, int l, int r, std::vector<bool>& newBitmap)
+// a is passed here by a const reference to create a complete set of bitmaps that the override rate can be
+// caclulated over
+void PermuteOneBitmap(const std::vector<std::vector<bool>>& a, int l, int r, std::vector<bool>& newBitmap)
 {
 	// We will hit this 'if' if the bitmap is permuted
 	// Then (if l==r, so the bitmap is constructed) we will calculate the override rate:
@@ -364,7 +369,7 @@ void PermuteOneBitmap(std::vector<std::vector<bool>>& a, int l, int r, std::vect
 	if (l == r) // I don't get this, why do we do it only in case l == r?
 	{
 		// Set with additional, new bitmap
-		std::vector<std::vector<bool>> b = a;
+		std::vector<std::vector<bool>> b = a;//This is just passed to add a new bitmap to the set
 		b.push_back(newBitmap);
 		// Action of the permute
 		auto overrideRate = GetOverrideRateCorrect(b);
@@ -470,6 +475,9 @@ int main()
 
    std::cout << "########### here ############" << std::endl;
 
+
+   // This part of the code was to check if the override rate DOES NOT depend
+   // on the order of bitmaps in the bitmap set
    std::vector<std::vector<std::vector<bool>>> out;
    Permute(bitmapsSingleDiscrepancy, 0, bitmapsSingleDiscrepancy.size() - 1, out);
 
