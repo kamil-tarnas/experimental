@@ -167,10 +167,10 @@ echo ${remotes[0]}
 
 # How to not pollute the names?
 # To have the red lines on gerrit deleted and greed lines on gerrit added we need to swap the references - firstCommit is the secondPatchSetNumber
-firstCommit=$(git fetch ${remotes[0]} refs/changes/$changeNumberSpace/$changeNumber/$secondPatchSetNumber && \
+firstCommit=$(git fetch ${remotes[0]} refs/changes/$changeNumberSpace/$changeNumber/$firstPatchSetNumber && \
   git rev-parse --verify FETCH_HEAD)
   
-secondCommit=$(git fetch ${remotes[0]} refs/changes/$changeNumberSpace/$changeNumber/$firstPatchSetNumber && \
+secondCommit=$(git fetch ${remotes[0]} refs/changes/$changeNumberSpace/$changeNumber/$secondPatchSetNumber && \
   git rev-parse --verify FETCH_HEAD)
 
 # If first commit is not empty (need to do it for both commits)
